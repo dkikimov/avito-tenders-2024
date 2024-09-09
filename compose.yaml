@@ -1,0 +1,25 @@
+services:
+  webserver:
+    container_name: "avito-webserver"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+  postgres:
+    container_name: "avito-postgres"
+    image: postgres:16.2
+    environment:
+      POSTGRES_USER: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql-avito-tenders/data
+
+volumes:
+  pgdata: {}
