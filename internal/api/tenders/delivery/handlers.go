@@ -1,0 +1,52 @@
+package delivery
+
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+
+	"github.com/asaskevich/govalidator"
+
+	"avito-tenders/internal/api/tenders"
+	"avito-tenders/internal/api/tenders/entities"
+	"avito-tenders/pkg/apperror"
+)
+
+type Handlers struct {
+	uc tenders.Usecase
+}
+
+func NewHandlers(uc tenders.Usecase) *Handlers {
+	return &Handlers{uc: uc}
+}
+
+func (h *Handlers) CreateTender(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		return
+	}
+
+	var tender entities.CreateTenderRequest
+	if err := json.Unmarshal(body, &tender); err != nil {
+		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		return
+	}
+
+	if _, err := govalidator.ValidateStruct(&tender); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	createdTender, err := h.uc.Create(r.Context(), tender)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(createdTender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
