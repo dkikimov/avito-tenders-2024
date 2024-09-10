@@ -5,6 +5,7 @@ import (
 
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
+	"avito-tenders/pkg/query"
 )
 
 type usecase struct {
@@ -30,9 +31,8 @@ func (u *usecase) FindById(ctx context.Context, id string) (entities.ResponseTen
 	panic("implement me")
 }
 
-func (u *usecase) FindByUsername(ctx context.Context, username string) ([]entities.ResponseTender, error) {
-	// TODO implement me
-	panic("implement me")
+func (u *usecase) FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error) {
+	return u.repo.FindByUsername(ctx, username, pagination)
 }
 
 func NewUseCase(repo tenders.Repository) tenders.Usecase {

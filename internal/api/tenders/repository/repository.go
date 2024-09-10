@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
@@ -11,6 +13,7 @@ import (
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
 	"avito-tenders/pkg/apperror"
+	"avito-tenders/pkg/query"
 )
 
 type repository struct {
@@ -40,6 +43,7 @@ func (r repository) Create(ctx context.Context, request entities.CreateTenderReq
 			}
 		}
 
+		slog.Error("failed to insert tender", "error", row.Err())
 		return entities.ResponseTender{}, apperror.InternalServerError(row.Err())
 	}
 
@@ -51,23 +55,53 @@ func (r repository) Create(ctx context.Context, request entities.CreateTenderReq
 	return result, nil
 }
 
-func (r repository) FindByUsername(ctx context.Context, username string) ([]entities.ResponseTender, error) {
-	var tenders = make([]entities.ResponseTender, 0)
+func (r repository) FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+	defer tx.Rollback()
 
-	err := r.db.SelectContext(ctx, tenders, `
+	// Check does user exist.
+	var id int
+	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
+	if row.Err() != nil {
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
+		}
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	// Find user's tenders.
+	var tenderList = make([]entities.ResponseTender, 0)
+	err = tx.SelectContext(ctx, &tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
-		where creator_username = ?`,
-		username)
+		where creator_username = $1
+		limit $2
+		offset $3`,
+		username,
+		pagination.Limit,
+		pagination.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select: %w", err)
 	}
 
-	return tenders, nil
+	if err := tx.Commit(); err != nil {
+		slog.Error("failed to commit transaction", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return tenderList, nil
 }
 
 func (r repository) FindById(ctx context.Context, id int) (entities.ResponseTender, error) {
-	var tenders entities.ResponseTender
-	err := r.db.SelectContext(ctx, tenders, `
+	var tenderList entities.ResponseTender
+	err := r.db.SelectContext(ctx, tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where id = ?`,
 		id)
@@ -75,19 +109,19 @@ func (r repository) FindById(ctx context.Context, id int) (entities.ResponseTend
 		return entities.ResponseTender{}, fmt.Errorf("failed to select: %w", err)
 	}
 
-	return tenders, nil
+	return tenderList, nil
 }
 
 func (r repository) GetAll(ctx context.Context) ([]entities.ResponseTender, error) {
-	var tenders = make([]entities.ResponseTender, 0)
+	var tenderList = make([]entities.ResponseTender, 0)
 
-	err := r.db.SelectContext(ctx, tenders, `
+	err := r.db.SelectContext(ctx, tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders`)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select: %w", err)
 	}
 
-	return tenders, nil
+	return tenderList, nil
 }
 
 func (r repository) EditStatus(ctx context.Context, id int, request entities.EditTenderStatusRequest) (entities.ResponseTender, error) {

@@ -7,5 +7,6 @@ import (
 func (h *Handlers) MapTendersRoutes(r chi.Router) {
 	r.Route("/tenders", func(r chi.Router) {
 		r.Post("/new", h.CreateTender)
+		r.Get("/my", h.GetMyTenders)
 	})
 }

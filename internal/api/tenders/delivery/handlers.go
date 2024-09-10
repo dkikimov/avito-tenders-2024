@@ -3,6 +3,7 @@ package delivery
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
@@ -10,6 +11,7 @@ import (
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
 	"avito-tenders/pkg/apperror"
+	"avito-tenders/pkg/query"
 )
 
 type Handlers struct {
@@ -49,4 +51,34 @@ func (h *Handlers) CreateTender(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(createdTender); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
+}
+
+func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
+	values := r.URL.Query()
+
+	username := values.Get("username")
+	if len(username) == 0 {
+		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		return
+	}
+
+	pagination, err := query.ParsePagination(values)
+	if err != nil {
+		apperror.SendError(w, err)
+		slog.Error("couldn't parse pagination", "error", err)
+		return
+	}
+
+	createdTender, err := h.uc.FindByUsername(r.Context(), username, pagination)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(createdTender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+
 }
