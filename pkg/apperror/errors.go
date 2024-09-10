@@ -10,6 +10,7 @@ var (
 	ErrInvalidInput     = errors.New("invalid input")
 	ErrUserDoesNotExist = errors.New("user does not exist")
 	ErrInternal         = errors.New("internal error")
+	ErrNotFound         = errors.New("not found")
 )
 
 type AppError struct {

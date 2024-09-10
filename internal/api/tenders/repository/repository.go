@@ -100,16 +100,27 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 }
 
 func (r repository) FindById(ctx context.Context, id int) (entities.ResponseTender, error) {
-	var tenderList entities.ResponseTender
-	err := r.db.SelectContext(ctx, tenderList, `
+	row := r.db.QueryRowxContext(ctx, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
-		where id = ?`,
+		where id = $1`,
 		id)
-	if err != nil {
-		return entities.ResponseTender{}, fmt.Errorf("failed to select: %w", err)
+
+	if row.Err() != nil {
+		slog.Error("failed to select", "error", row.Err())
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	return tenderList, nil
+	var tender entities.ResponseTender
+	if err := row.StructScan(&tender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.BadRequest(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return tender, nil
 }
 
 func (r repository) GetAll(ctx context.Context) ([]entities.ResponseTender, error) {

@@ -2,11 +2,13 @@ package delivery
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/asaskevich/govalidator"
+	"github.com/go-chi/chi/v5"
 
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
@@ -80,5 +82,24 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(createdTender); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
+}
 
+func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
+	tenderId := chi.URLParam(r, tenderIdPathParam)
+	if tenderId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
+		return
+	}
+
+	tender, err := h.uc.FindById(r.Context(), tenderId)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(entities.TenderStatusResponse{Status: tender.Status}); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
 }
