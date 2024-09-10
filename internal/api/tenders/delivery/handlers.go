@@ -138,6 +138,54 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
+	tenderId := chi.URLParam(r, tenderIdPathParam)
+	if tenderId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
+		return
+	}
+
+	urlQuery := r.URL.Query()
+	username := urlQuery.Get("username")
+	if len(username) == 0 {
+		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserDoesNotExist))
+		return
+	}
+
+	// Parse body to EditTender.
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		return
+	}
+
+	var edit entities.EditTender
+	if err := json.Unmarshal(body, &edit); err != nil {
+		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		return
+	}
+
+	if valid, err := govalidator.ValidateStruct(&edit); !valid || err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.Edit(r.Context(), tenderId, entities.EditTenderRequest{
+		EditTender: edit,
+		Username:   username,
+	})
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
 func init() {
 	validation.AddValidations()
 }

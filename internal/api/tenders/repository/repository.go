@@ -186,17 +186,72 @@ func (r repository) EditStatus(ctx context.Context, id int, request entities.Edi
 }
 
 func (r repository) Edit(ctx context.Context, id int, request entities.EditTenderRequest) (entities.ResponseTender, error) {
-	row := r.db.QueryRowxContext(ctx, `
-		update tenders set status = ? where id = ? and creator_username = ?
-		returning id, name, description, service_type, status, organization_id, version, created_at 
-`)
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+	defer tx.Rollback()
+
+	// Check does user exist.
+	exist, err := r.DoesUserExist(ctx, tx, request.Username)
+	if err != nil || !exist {
+		return entities.ResponseTender{}, err
+	}
+
+	// Check does tender exist.
+	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
 	if row.Err() != nil {
-		return entities.ResponseTender{}, fmt.Errorf("failed to select: %w", row.Err())
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to select id tender", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	var tenderId int
+	if err := row.Scan(&tenderId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan tender id", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	// Try to update tender.
+	// If returns 0, that means creator_username doesn't have enough permissions.
+	row = r.db.QueryRowxContext(
+		ctx,
+		`
+		update tenders set 
+		                   name = CASE WHEN $1 != '' THEN $1 ELSE name END,
+		                   description = CASE WHEN $2 != '' THEN $2 ELSE description END,
+		                   service_type = CASE WHEN $3 != '' THEN $3 ELSE service_type END,
+		                   version = version + 1 
+		               		where id = $4 and creator_username = $5
+		returning id, name, description, service_type, status, organization_id, version, created_at 
+`,
+		request.Name,
+		request.Description,
+		request.ServiceType,
+		id,
+		request.Username,
+	)
+	if row.Err() != nil {
+		slog.Error("failed to update status", "error", row.Err())
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	var tender entities.ResponseTender
-	if err := row.Scan(&tender); err != nil {
-		return entities.ResponseTender{}, fmt.Errorf("failed to scan: %w", err)
+	if err := row.StructScan(&tender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
+		}
+
+		slog.Error("failed to scan", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tender, nil

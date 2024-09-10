@@ -9,8 +9,13 @@ type EditTenderStatusRequest struct {
 	Username string              `json:"username" valid:"required"`
 }
 
+type EditTender struct {
+	Name        string             `json:"name,omitempty"`
+	Description string             `json:"description,omitempty"`
+	ServiceType entity.ServiceType `json:"serviceType,omitempty" valid:"service_type"`
+}
+
 type EditTenderRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	ServiceType *string `json:"serviceType,omitempty"`
+	EditTender
+	Username string `json:"username" valid:"required"`
 }

@@ -20,8 +20,13 @@ func (u *usecase) Create(ctx context.Context, request entities.CreateTenderReque
 }
 
 func (u *usecase) Edit(ctx context.Context, id string, request entities.EditTenderRequest) (entities.ResponseTender, error) {
-	// TODO implement me
-	panic("implement me")
+	var idInt int
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return entities.ResponseTender{}, apperror.BadRequest(errors.New("tender id is not number"))
+	}
+
+	return u.repo.Edit(ctx, idInt, request)
 }
 
 func (u *usecase) FindList(ctx context.Context, id string) ([]entities.ResponseTender, error) {

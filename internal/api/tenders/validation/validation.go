@@ -20,4 +20,18 @@ func AddValidations() {
 			return false
 		}
 	})
+
+	govalidator.CustomTypeTagMap.Set("service_type", func(i interface{}, o interface{}) bool {
+		value, ok := i.(entity.ServiceType)
+		if !ok {
+			return false
+		}
+
+		switch value {
+		case entity.ServiceConstruction, entity.ServiceDelivery, entity.ServiceManufacture:
+			return true
+		default:
+			return false
+		}
+	})
 }
