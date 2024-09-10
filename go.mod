@@ -3,9 +3,11 @@ module avito-tenders
 go 1.22.7
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/caarlos0/env/v11 v11.2.2
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-chi/cors v1.2.1
+	github.com/invopop/validation v0.8.0
 	github.com/jackc/pgx/v5 v5.7.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/swaggo/http-swagger v1.3.4
@@ -13,7 +15,6 @@ require (
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
 	github.com/go-openapi/spec v0.20.6 // indirect

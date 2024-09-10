@@ -12,7 +12,6 @@ import (
 
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
-	"avito-tenders/internal/api/tenders/validation"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
 	"avito-tenders/pkg/query"
@@ -39,7 +38,7 @@ func (h *Handlers) CreateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := govalidator.ValidateStruct(&tender); err != nil {
+	if err := tender.Validate(); err != nil {
 		apperror.SendError(w, apperror.BadRequest(err))
 		return
 	}
@@ -120,7 +119,7 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 		Username: urlQuery.Get("username"),
 	}
 
-	if valid, err := govalidator.ValidateStruct(&req); !valid || err != nil {
+	if err := req.Validate(); err != nil {
 		apperror.SendError(w, apperror.BadRequest(err))
 		return
 	}
@@ -186,6 +185,44 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func init() {
-	validation.AddValidations()
+func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
+	tenderId := chi.URLParam(r, tenderIdPathParam)
+	if tenderId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
+		return
+	}
+
+	version := chi.URLParam(r, versionPathParam)
+	if version == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("version is not specified")))
+		return
+	}
+
+	urlQuery := r.URL.Query()
+	username := urlQuery.Get("username")
+	if len(username) == 0 {
+		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserDoesNotExist))
+		return
+	}
+
+	request := entities.RollbackTenderRequest{
+		Username: username,
+		Version:  version,
+	}
+	if err := request.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.Rollback(r.Context(), tenderId, request)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
 }

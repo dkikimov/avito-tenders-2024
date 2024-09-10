@@ -276,3 +276,97 @@ func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username str
 
 	return true, nil
 }
+
+func (r repository) Rollback(ctx context.Context, id int, request entities.RollbackTender) (entities.ResponseTender, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+	defer tx.Rollback()
+
+	// Check does user exist.
+	exist, err := r.DoesUserExist(ctx, tx, request.Username)
+	if err != nil || !exist {
+		return entities.ResponseTender{}, err
+	}
+
+	// Check does tender exist.
+	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
+	if row.Err() != nil {
+		slog.Error("failed to select id tender", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	var tenderId int
+	if err := row.Scan(&tenderId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan tender id", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	// Get old version
+	row = r.db.QueryRowxContext(ctx, `
+		select id, name, description, service_type, status, organization_id, version, created_at from tender_history 
+		where tender_id = $1 and version = $2`,
+		id, request.Version)
+	if row.Err() != nil {
+		slog.Error("failed to select id tender", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	var oldTender entities.ResponseTender
+	if err := row.StructScan(&oldTender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan old tender", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	// Try to update tender.
+	// If returns 0, that means creator_username doesn't have enough permissions.
+	row = r.db.QueryRowxContext(
+		ctx,
+		`
+		update tenders set 
+		                   name = $1,
+		                   description = $2,
+		                   service_type = $3,
+		                   status = $4, 
+		                   organization_id = $5, 
+		                   created_at = $6,
+		                   version = version + 1 
+		               		where id = $7 and creator_username = $8
+		returning id, name, description, service_type, status, organization_id, version, created_at 
+`,
+		oldTender.Name,
+		oldTender.Description,
+		oldTender.ServiceType,
+		oldTender.Status,
+		oldTender.OrganizationId,
+		oldTender.CreatedAt,
+		id,
+		request.Username,
+	)
+	if row.Err() != nil {
+		slog.Error("failed to update status", "error", row.Err())
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	var tender entities.ResponseTender
+	if err := row.StructScan(&tender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
+		}
+
+		slog.Error("failed to scan", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return tender, nil
+}

@@ -14,6 +14,7 @@ type Usecase interface {
 	Create(ctx context.Context, request entities.CreateTenderRequest) (entities.ResponseTender, error)
 	Edit(ctx context.Context, id string, request entities.EditTenderRequest) (entities.ResponseTender, error)
 	EditStatus(ctx context.Context, id string, request entities.EditTenderStatusRequest) (entities.ResponseTender, error)
+	Rollback(ctx context.Context, id string, request entities.RollbackTenderRequest) (entities.ResponseTender, error)
 	FindList(ctx context.Context, id string) ([]entities.ResponseTender, error)
 	FindById(ctx context.Context, id string) (entities.ResponseTender, error)
 	FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error)

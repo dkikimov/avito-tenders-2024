@@ -58,6 +58,23 @@ func (u *usecase) EditStatus(ctx context.Context, id string, request entities.Ed
 	return u.repo.EditStatus(ctx, idInt, request)
 }
 
+func (u *usecase) Rollback(ctx context.Context, id string, request entities.RollbackTenderRequest) (entities.ResponseTender, error) {
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return entities.ResponseTender{}, apperror.BadRequest(errors.New("tender id is not number"))
+	}
+
+	versionInt, err := strconv.Atoi(request.Version)
+	if err != nil {
+		return entities.ResponseTender{}, apperror.BadRequest(errors.New("version is not number"))
+	}
+
+	return u.repo.Rollback(ctx, idInt, entities.RollbackTender{
+		Username: request.Username,
+		Version:  versionInt,
+	})
+}
+
 func NewUseCase(repo tenders.Repository) tenders.Usecase {
 	return &usecase{repo}
 }

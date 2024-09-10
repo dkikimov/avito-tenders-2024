@@ -2,10 +2,20 @@ package entity
 
 import (
 	"time"
+
+	"github.com/invopop/validation"
 )
 
 // TenderStatus is enum that represents all possible tender statuses.
 type TenderStatus string
+
+func (t TenderStatus) ValidationRules() validation.Rule {
+	return validation.In(
+		TenderCreated,
+		TenderClosed,
+		TenderPublished,
+	)
+}
 
 func (t TenderStatus) String() string {
 	return string(t)
@@ -19,6 +29,14 @@ const (
 
 // ServiceType is enum that represents all possible service types.
 type ServiceType string
+
+func (t ServiceType) ValidationRules() validation.Rule {
+	return validation.In(
+		ServiceDelivery,
+		ServiceConstruction,
+		ServiceManufacture,
+	)
+}
 
 func (t ServiceType) String() string {
 	return string(t)

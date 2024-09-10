@@ -14,4 +14,5 @@ type Repository interface {
 	FindById(ctx context.Context, id int) (entities.ResponseTender, error)
 	FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error)
 	EditStatus(ctx context.Context, id int, request entities.EditTenderStatusRequest) (entities.ResponseTender, error)
+	Rollback(ctx context.Context, id int, request entities.RollbackTender) (entities.ResponseTender, error)
 }
