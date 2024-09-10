@@ -13,5 +13,6 @@ func (h *Handlers) MapTendersRoutes(r chi.Router) {
 		r.Post("/new", h.CreateTender)
 		r.Get("/my", h.GetMyTenders)
 		r.Get(fmt.Sprintf("/{%s}/status", tenderIdPathParam), h.GetTenderStatus)
+		r.Put(fmt.Sprintf("/{%s}/status", tenderIdPathParam), h.UpdateTenderStatus)
 	})
 }

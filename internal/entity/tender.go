@@ -1,6 +1,8 @@
 package entity
 
-import "time"
+import (
+	"time"
+)
 
 type TenderStatus string
 
@@ -9,9 +11,9 @@ func (t TenderStatus) String() string {
 }
 
 const (
-	TenderCreated   TenderStatus = "CREATED"
-	TenderPublished TenderStatus = "PUBLISHED"
-	TenderClosed    TenderStatus = "CLOSED"
+	TenderCreated   TenderStatus = "Created"
+	TenderPublished TenderStatus = "Published"
+	TenderClosed    TenderStatus = "Closed"
 )
 
 // Tender is the entity that represents tender.

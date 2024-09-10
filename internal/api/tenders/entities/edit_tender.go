@@ -1,8 +1,12 @@
 package entities
 
+import (
+	"avito-tenders/internal/entity"
+)
+
 type EditTenderStatusRequest struct {
-	Status   string `json:"status"`
-	Username string `json:"username"`
+	Status   entity.TenderStatus `json:"status" valid:"required,tender_status"`
+	Username string              `json:"username" valid:"required"`
 }
 
 type EditTenderRequest struct {

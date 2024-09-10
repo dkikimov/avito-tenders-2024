@@ -8,7 +8,7 @@ type CreateTenderRequest struct {
 	Name            string              `json:"name" valid:"required"`
 	Description     string              `json:"description" valid:"required"`
 	ServiceType     string              `json:"serviceType" valid:"required"`
-	Status          entity.TenderStatus `json:"status" valid:"required"`
+	Status          entity.TenderStatus `json:"status" valid:"required,tender_status"`
 	OrganizationId  int                 `json:"organizationId" valid:"required"`
 	CreatorUsername string              `json:"creatorUsername" valid:"required"`
 }

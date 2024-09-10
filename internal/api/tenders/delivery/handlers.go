@@ -12,6 +12,8 @@ import (
 
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
+	"avito-tenders/internal/api/tenders/validation"
+	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
 	"avito-tenders/pkg/query"
 )
@@ -102,4 +104,40 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(entities.TenderStatusResponse{Status: tender.Status}); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
+}
+
+func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
+	tenderId := chi.URLParam(r, tenderIdPathParam)
+	if tenderId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
+		return
+	}
+
+	urlQuery := r.URL.Query()
+
+	req := entities.EditTenderStatusRequest{
+		Status:   entity.TenderStatus(urlQuery.Get("status")),
+		Username: urlQuery.Get("username"),
+	}
+
+	if valid, err := govalidator.ValidateStruct(&req); !valid || err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.EditStatus(r.Context(), tenderId, req)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
+func init() {
+	validation.AddValidations()
 }

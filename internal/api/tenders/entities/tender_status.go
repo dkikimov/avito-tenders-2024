@@ -1,5 +1,7 @@
 package entities
 
+import "avito-tenders/internal/entity"
+
 type TenderStatusResponse struct {
-	Status string `json:"tenderStatus"`
+	Status entity.TenderStatus `json:"tenderStatus"`
 }

@@ -43,6 +43,16 @@ func (u *usecase) FindByUsername(ctx context.Context, username string, paginatio
 	return u.repo.FindByUsername(ctx, username, pagination)
 }
 
+func (u *usecase) EditStatus(ctx context.Context, id string, request entities.EditTenderStatusRequest) (entities.ResponseTender, error) {
+	var idInt int
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return entities.ResponseTender{}, apperror.BadRequest(errors.New("tender id is not number"))
+	}
+
+	return u.repo.EditStatus(ctx, idInt, request)
+}
+
 func NewUseCase(repo tenders.Repository) tenders.Usecase {
 	return &usecase{repo}
 }

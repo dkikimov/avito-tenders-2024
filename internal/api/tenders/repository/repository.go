@@ -63,18 +63,9 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 	}
 	defer tx.Rollback()
 
-	// Check does user exist.
-	var id int
-	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
-	if row.Err() != nil {
-		return nil, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	if err := row.Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
-		}
-		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	exist, err := r.DoesUserExist(ctx, tx, username)
+	if err != nil || !exist {
+		return nil, err
 	}
 
 	// Find user's tenders.
@@ -136,17 +127,59 @@ func (r repository) GetAll(ctx context.Context) ([]entities.ResponseTender, erro
 }
 
 func (r repository) EditStatus(ctx context.Context, id int, request entities.EditTenderStatusRequest) (entities.ResponseTender, error) {
-	row := r.db.QueryRowxContext(ctx, `
-		update tenders set status = ? where id = ? and creator_username = ?
-		returning id, name, description, service_type, status, organization_id, version, created_at 
-`)
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		slog.Error("failed to begin transaction", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+	defer tx.Rollback()
+
+	// Check does user exist.
+	exist, err := r.DoesUserExist(ctx, tx, request.Username)
+	if err != nil || !exist {
+		return entities.ResponseTender{}, err
+	}
+
+	// Check does tender exist.
+	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
 	if row.Err() != nil {
-		return entities.ResponseTender{}, fmt.Errorf("failed to select: %w", row.Err())
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to select id tender", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	var tenderId int
+	if err := row.Scan(&tenderId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan tender id", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	// Try to update tender.
+	// If returns 0, that means creator_username doesn't have enough permissions.
+	row = r.db.QueryRowxContext(ctx, `
+		update tenders set status = $1, version = version + 1 where id = $2 and creator_username = $3
+		returning id, name, description, service_type, status, organization_id, version, created_at 
+`, request.Status, id, request.Username)
+	if row.Err() != nil {
+		slog.Error("failed to update status", "error", row.Err())
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	var tender entities.ResponseTender
-	if err := row.Scan(&tender); err != nil {
-		return entities.ResponseTender{}, fmt.Errorf("failed to scan: %w", err)
+	if err := row.StructScan(&tender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entities.ResponseTender{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
+		}
+
+		slog.Error("failed to scan", "error", err)
+		return entities.ResponseTender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tender, nil
@@ -167,4 +200,24 @@ func (r repository) Edit(ctx context.Context, id int, request entities.EditTende
 	}
 
 	return tender, nil
+}
+
+func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username string) (bool, error) {
+	var id int
+	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
+	if row.Err() != nil {
+		slog.Error("failed to select", row.Err())
+		return false, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	if err := row.Scan(&id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
+		}
+
+		slog.Error("failed to scan", row.Err())
+		return false, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return true, nil
 }
