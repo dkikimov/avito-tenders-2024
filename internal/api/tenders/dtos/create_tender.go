@@ -1,4 +1,4 @@
-package entities
+package dtos
 
 import (
 	"github.com/invopop/validation"
@@ -19,8 +19,8 @@ func (c CreateTenderRequest) Validate() error {
 	return validation.ValidateStruct(&c,
 		validation.Field(&c.Name, validation.Required, validation.Length(3, 50)),
 		validation.Field(&c.Description, validation.Required),
-		validation.Field(&c.ServiceType, validation.Required, c.ServiceType.ValidationRules()),
-		validation.Field(&c.Status, validation.Required, c.Status.ValidationRules()),
+		validation.Field(&c.ServiceType, validation.Required, c.ServiceType.ValidationRule()),
+		validation.Field(&c.Status, validation.Required, c.Status.ValidationRule()),
 		validation.Field(&c.OrganizationId, validation.Required),
 		validation.Field(&c.CreatorUsername, validation.Required),
 	)

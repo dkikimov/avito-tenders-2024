@@ -1,4 +1,4 @@
-package entities
+package dtos
 
 import (
 	"github.com/invopop/validation"
@@ -13,7 +13,7 @@ type EditTenderStatusRequest struct {
 
 func (r EditTenderStatusRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Status, validation.Required, r.Status.ValidationRules()),
+		validation.Field(&r.Status, validation.Required, r.Status.ValidationRule()),
 		validation.Field(&r.Username, validation.Required),
 	)
 }
@@ -26,7 +26,7 @@ type EditTender struct {
 
 func (t EditTender) Validate() error {
 	return validation.ValidateStruct(&t,
-		validation.Field(&t.ServiceType, t.ServiceType.ValidationRules()))
+		validation.Field(&t.ServiceType, t.ServiceType.ValidationRule()))
 }
 
 type EditTenderRequest struct {

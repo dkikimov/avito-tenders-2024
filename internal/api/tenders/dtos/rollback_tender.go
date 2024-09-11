@@ -1,4 +1,4 @@
-package entities
+package dtos
 
 import "github.com/invopop/validation"
 

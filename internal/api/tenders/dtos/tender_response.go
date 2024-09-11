@@ -1,4 +1,4 @@
-package entities
+package dtos
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"avito-tenders/internal/entity"
 )
 
-type ResponseTender struct {
+type TenderResponse struct {
 	Id             int                 `db:"id"`
 	Name           string              `db:"name"`
 	Description    string              `db:"description"`

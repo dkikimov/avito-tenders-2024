@@ -3,12 +3,18 @@ package bids
 import (
 	"context"
 
-	"go-metricscol/internal/models"
+	"avito-tenders/internal/api/bids/dtos"
+	"avito-tenders/internal/entity"
 )
 
-type UseCase interface {
-	Find(ctx context.Context, name string, mType models.MetricType) (*models.Metric, error)
-	Update(ctx context.Context, metric models.Metric) error
-	Updates(ctx context.Context, metrics []models.Metric) error
-	GetAll(ctx context.Context) ([]models.Metric, error)
+type Usecase interface {
+	Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.BidResponse, error)
+	FindByUsername(ctx context.Context, username string) ([]dtos.BidResponse, error)
+	FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error)
+	GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error)
+	UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error)
+	SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error)
+	SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error)
+	Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error)
+	FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error)
 }

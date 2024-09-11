@@ -12,7 +12,7 @@ import (
 	"github.com/invopop/validation"
 
 	"avito-tenders/internal/api/tenders"
-	"avito-tenders/internal/api/tenders/entities"
+	"avito-tenders/internal/api/tenders/dtos"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
 	"avito-tenders/pkg/queryparams"
@@ -33,7 +33,7 @@ func (h *Handlers) CreateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tender entities.CreateTenderRequest
+	var tender dtos.CreateTenderRequest
 	if err := json.Unmarshal(body, &tender); err != nil {
 		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
 		return
@@ -103,7 +103,7 @@ func (h *Handlers) GetTenders(w http.ResponseWriter, r *http.Request) {
 	for _, serviceTypeString := range serviceTypesStrings {
 		serviceType := entity.ServiceType(serviceTypeString)
 
-		if err := validation.Validate(serviceType, serviceType.ValidationRules()); err != nil {
+		if err := validation.Validate(serviceType, serviceType.ValidationRule()); err != nil {
 			apperror.SendError(w, apperror.BadRequest(err))
 			return
 		}
@@ -134,7 +134,7 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := entities.TenderStatus{
+	request := dtos.TenderStatus{
 		Username: r.URL.Query().Get("username"),
 	}
 
@@ -146,7 +146,7 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(entities.TenderStatusResponse{Status: tender.Status}); err != nil {
+	if err := json.NewEncoder(w).Encode(dtos.TenderStatusResponse{Status: tender.Status}); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }
@@ -160,7 +160,7 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 
 	urlQuery := r.URL.Query()
 
-	req := entities.EditTenderStatusRequest{
+	req := dtos.EditTenderStatusRequest{
 		Status:   entity.TenderStatus(urlQuery.Get("status")),
 		Username: urlQuery.Get("username"),
 	}
@@ -204,7 +204,7 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var edit entities.EditTender
+	var edit dtos.EditTender
 	if err := json.Unmarshal(body, &edit); err != nil {
 		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
 		return
@@ -215,7 +215,7 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.Edit(r.Context(), tenderId, entities.EditTenderRequest{
+	tender, err := h.uc.Edit(r.Context(), tenderId, dtos.EditTenderRequest{
 		EditTender: edit,
 		Username:   username,
 	})
@@ -251,7 +251,7 @@ func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := entities.RollbackTenderRequest{
+	request := dtos.RollbackTenderRequest{
 		Username: username,
 		Version:  version,
 	}

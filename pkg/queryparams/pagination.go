@@ -20,8 +20,8 @@ const (
 )
 
 type Pagination struct {
-	Limit  int
-	Offset int
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
 }
 
 func ParsePagination(values url.Values) (Pagination, error) {

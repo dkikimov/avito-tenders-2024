@@ -1,4 +1,4 @@
-package entities
+package dtos
 
 import "avito-tenders/internal/entity"
 

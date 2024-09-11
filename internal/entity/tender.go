@@ -9,7 +9,7 @@ import (
 // TenderStatus is enum that represents all possible tender statuses.
 type TenderStatus string
 
-func (t TenderStatus) ValidationRules() validation.Rule {
+func (t TenderStatus) ValidationRule() validation.Rule {
 	return validation.In(
 		TenderCreated,
 		TenderClosed,
@@ -30,7 +30,7 @@ const (
 // ServiceType is enum that represents all possible service types.
 type ServiceType string
 
-func (t ServiceType) ValidationRules() validation.Rule {
+func (t ServiceType) ValidationRule() validation.Rule {
 	return validation.In(
 		ServiceDelivery,
 		ServiceConstruction,

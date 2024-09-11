@@ -3,7 +3,7 @@ package tenders
 import (
 	"context"
 
-	"avito-tenders/internal/api/tenders/entities"
+	"avito-tenders/internal/api/tenders/dtos"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/queryparams"
 )
@@ -13,11 +13,11 @@ type TenderFilter struct {
 }
 
 type Repository interface {
-	Create(ctx context.Context, request entities.CreateTenderRequest) (entities.ResponseTender, error)
-	Edit(ctx context.Context, id int, request entities.EditTenderRequest) (entities.ResponseTender, error)
-	GetAll(ctx context.Context, filter TenderFilter, pagination queryparams.Pagination) ([]entities.ResponseTender, error)
-	FindById(ctx context.Context, id int) (entities.ResponseTender, error)
-	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entities.ResponseTender, error)
-	EditStatus(ctx context.Context, id int, request entities.EditTenderStatusRequest) (entities.ResponseTender, error)
-	Rollback(ctx context.Context, id int, request entities.RollbackTender) (entities.ResponseTender, error)
+	Create(ctx context.Context, request dtos.CreateTenderRequest) (dtos.TenderResponse, error)
+	Edit(ctx context.Context, id int, request dtos.EditTenderRequest) (dtos.TenderResponse, error)
+	GetAll(ctx context.Context, filter TenderFilter, pagination queryparams.Pagination) ([]dtos.TenderResponse, error)
+	FindById(ctx context.Context, id int) (dtos.TenderResponse, error)
+	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.TenderResponse, error)
+	EditStatus(ctx context.Context, id int, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error)
+	Rollback(ctx context.Context, id int, request dtos.RollbackTender) (dtos.TenderResponse, error)
 }
