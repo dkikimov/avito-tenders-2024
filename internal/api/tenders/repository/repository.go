@@ -12,7 +12,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"avito-tenders/internal/api/tenders"
-	"avito-tenders/internal/api/tenders/dtos"
+	"avito-tenders/internal/api/tenders/models"
+	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
 	"avito-tenders/pkg/queryparams"
 )
@@ -21,42 +22,101 @@ type repository struct {
 	db *sqlx.DB
 }
 
+func (r repository) FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Tender, error) {
+	row := r.db.QueryRowxContext(ctx, `
+		select tender_id as id, name, description, service_type, status, organization_id, version, created_at from tenders_history
+		where tender_id = $1 and version = $2`,
+		id, version)
+	if row.Err() != nil {
+		return entity.Tender{}, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	var oldTender entity.Tender
+	if err := row.StructScan(&oldTender); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Tender{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("failed to scan old tender", "error", err)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return oldTender, nil
+}
+
 func NewRepository(db *sqlx.DB) tenders.Repository {
 	return &repository{db: db}
 }
 
-func (r repository) Create(ctx context.Context, request dtos.CreateTenderRequest) (dtos.TenderResponse, error) {
+func (r repository) Create(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		INSERT INTO tenders(name, description, service_type, status, organization_id, creator_username) 
 		VALUES($1,$2,$3,$4,$5,$6)
 		returning id, name, description, service_type, status, organization_id, version, created_at`,
-		request.Name,
-		request.Description,
-		request.ServiceType,
-		request.Status.String(),
-		request.OrganizationId,
-		request.CreatorUsername)
+		tender.Name,
+		tender.Description,
+		tender.ServiceType,
+		tender.Status.String(),
+		tender.OrganizationId,
+		tender.CreatorUsername)
 	if row.Err() != nil {
 		var pgError *pgconn.PgError
 		if errors.As(row.Err(), &pgError) {
 			if pgError.Code == "23503" {
-				return dtos.TenderResponse{}, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
+				return entity.Tender{}, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
 			}
 		}
 
 		slog.Error("failed to insert tender", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(row.Err())
+		return entity.Tender{}, apperror.InternalServerError(row.Err())
 	}
 
-	var result dtos.TenderResponse
+	var result entity.Tender
 	if err := row.StructScan(&result); err != nil {
-		return dtos.TenderResponse{}, fmt.Errorf("failed to scan: %w", err)
+		return entity.Tender{}, fmt.Errorf("failed to scan: %w", err)
 	}
 
 	return result, nil
 }
 
-func (r repository) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.TenderResponse, error) {
+func (r repository) Update(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
+	row := r.db.QueryRowxContext(ctx, `
+		update tenders set
+		                   name = $1,
+		                   description = $2,
+		                   service_type = $3,
+		                   status = $4,
+		                   organization_id = $5,
+		                   version = version + 1
+		               where id = $6
+		returning id, name, description, service_type, status, organization_id, creator_username, created_at, version`,
+		tender.Name,
+		tender.Description,
+		tender.ServiceType,
+		tender.Status.String(),
+		tender.OrganizationId,
+		tender.Id)
+	if row.Err() != nil {
+		var pgError *pgconn.PgError
+		if errors.As(row.Err(), &pgError) {
+			if errors.Is(row.Err(), sql.ErrNoRows) {
+				return entity.Tender{}, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
+			}
+		}
+
+		slog.Error("failed to update tender", "error", row.Err())
+		return entity.Tender{}, apperror.InternalServerError(row.Err())
+	}
+
+	var result entity.Tender
+	if err := row.StructScan(&result); err != nil {
+		return entity.Tender{}, fmt.Errorf("failed to scan: %w", err)
+	}
+
+	return result, nil
+}
+
+func (r repository) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -70,7 +130,7 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 	}
 
 	// Find user's tenders.
-	var tenderList = make([]dtos.TenderResponse, 0)
+	var tenderList = make([]entity.Tender, 0)
 	err = tx.SelectContext(ctx, &tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where creator_username = $1
@@ -91,7 +151,7 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 	return tenderList, nil
 }
 
-func (r repository) FindById(ctx context.Context, id string) (dtos.TenderResponse, error) {
+func (r repository) FindById(ctx context.Context, id string) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where id = $1`,
@@ -99,23 +159,23 @@ func (r repository) FindById(ctx context.Context, id string) (dtos.TenderRespons
 
 	if row.Err() != nil {
 		slog.Error("failed to select", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var tender dtos.TenderResponse
+	var tender entity.Tender
 	if err := row.StructScan(&tender); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.BadRequest(apperror.ErrNotFound)
+			return entity.Tender{}, apperror.BadRequest(apperror.ErrNotFound)
 		}
 
 		slog.Error("failed to scan", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tender, nil
 }
 
-func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]dtos.TenderResponse, error) {
+func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]entity.Tender, error) {
 	var filterValues = make([]interface{}, 0)
 
 	query := strings.Builder{}
@@ -138,8 +198,7 @@ func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 	query.WriteString(fmt.Sprintf("limit $%d offset $%d", len(filterValues)+1, len(filterValues)+2))
 	filterValues = append(filterValues, pagination.Limit, pagination.Offset)
 
-	var tenderList = make([]dtos.TenderResponse, 0)
-	slog.Info(query.String())
+	var tenderList = make([]entity.Tender, 0)
 	err := r.db.SelectContext(ctx, &tenderList, query.String(), filterValues...)
 	if err != nil {
 		slog.Error("failed to get all tenders", "error", err)
@@ -149,103 +208,71 @@ func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 	return tenderList, nil
 }
 
-func (r repository) EditStatus(ctx context.Context, id string, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error) {
+func (r repository) EditStatus(ctx context.Context, request models.EditTenderStatus) (entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 	defer tx.Rollback()
 
 	// Check does user exist.
 	exist, err := r.DoesUserExist(ctx, tx, request.Username)
 	if err != nil || !exist {
-		return dtos.TenderResponse{}, err
+		return entity.Tender{}, err
 	}
 
 	// Check does tender exist.
-	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
-	if row.Err() != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to select id tender", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	var tenderId string
-	if err := row.Scan(&tenderId); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to scan tender id", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+	if _, err := r.FindById(ctx, request.TenderId); err != nil {
+		return entity.Tender{}, err
 	}
 
 	// Try to update tender.
 	// If returns 0, that means creator_username doesn't have enough permissions.
-	row = r.db.QueryRowxContext(ctx, `
+	row := r.db.QueryRowxContext(ctx, `
 		update tenders set status = $1, version = version + 1 where id = $2 and creator_username = $3
 		returning id, name, description, service_type, status, organization_id, version, created_at 
-`, request.Status, id, request.Username)
+`, request.Status, request.TenderId, request.Username)
 	if row.Err() != nil {
 		slog.Error("failed to update status", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var tender dtos.TenderResponse
+	var tender entity.Tender
 	if err := row.StructScan(&tender); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
+			return entity.Tender{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
 		}
 
 		slog.Error("failed to scan", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tender, nil
 }
 
-func (r repository) Edit(ctx context.Context, id string, request dtos.EditTenderRequest) (dtos.TenderResponse, error) {
+func (r repository) Edit(ctx context.Context, editTender models.EditTender) (entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 	defer tx.Rollback()
 
 	// Check does user exist.
-	exist, err := r.DoesUserExist(ctx, tx, request.Username)
+	exist, err := r.DoesUserExist(ctx, tx, editTender.Username)
 	if err != nil || !exist {
-		return dtos.TenderResponse{}, err
+		return entity.Tender{}, err
 	}
 
 	// Check does tender exist.
-	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
-	if row.Err() != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to select id tender", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	var tenderId string
-	if err := row.Scan(&tenderId); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to scan tender id", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+	if _, err := r.FindById(ctx, editTender.TenderID); err != nil {
+		return entity.Tender{}, err
 	}
 
 	// Try to update tender.
 	// If returns 0, that means creator_username doesn't have enough permissions.
-	row = r.db.QueryRowxContext(
+	row := r.db.QueryRowxContext(
 		ctx,
 		`
 		update tenders set 
@@ -256,25 +283,25 @@ func (r repository) Edit(ctx context.Context, id string, request dtos.EditTender
 		               		where id = $4 and creator_username = $5
 		returning id, name, description, service_type, status, organization_id, version, created_at 
 `,
-		request.Name,
-		request.Description,
-		request.ServiceType,
-		id,
-		request.Username,
+		editTender.Name,
+		editTender.Description,
+		editTender.ServiceType,
+		editTender.TenderID,
+		editTender.Username,
 	)
 	if row.Err() != nil {
 		slog.Error("failed to update status", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var tender dtos.TenderResponse
+	var tender entity.Tender
 	if err := row.StructScan(&tender); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
+			return entity.Tender{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
 		}
 
 		slog.Error("failed to scan", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tender, nil
@@ -298,97 +325,4 @@ func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username str
 	}
 
 	return true, nil
-}
-
-func (r repository) Rollback(ctx context.Context, id string, request dtos.RollbackTender) (dtos.TenderResponse, error) {
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		slog.Error("failed to begin transaction", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-	defer tx.Rollback()
-
-	// Check does user exist.
-	exist, err := r.DoesUserExist(ctx, tx, request.Username)
-	if err != nil || !exist {
-		return dtos.TenderResponse{}, err
-	}
-
-	// Check does tender exist.
-	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
-	if row.Err() != nil {
-		return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-	}
-
-	var tenderId string
-	if err := row.Scan(&tenderId); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to scan tender id", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	// Get old version
-	row = r.db.QueryRowxContext(ctx, `
-		select tender_id as id, name, description, service_type, status, organization_id, version, created_at from tenders_history 
-		where tender_id = $1 and version = $2`,
-		id, request.Version)
-	if row.Err() != nil {
-		slog.Error("failed to select id tender", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	var oldTender dtos.TenderResponse
-	if err := row.StructScan(&oldTender); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
-		}
-
-		slog.Error("failed to scan old tender", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	// Try to update tender.
-	// If returns 0, that means creator_username doesn't have enough permissions.
-	row = r.db.QueryRowxContext(
-		ctx,
-		`
-		update tenders set 
-		                   name = $1,
-		                   description = $2,
-		                   service_type = $3,
-		                   status = $4, 
-		                   organization_id = $5, 
-		                   created_at = $6,
-		                   version = version + 1 
-		               		where id = $7 and creator_username = $8
-		returning id, name, description, service_type, status, organization_id, version, created_at 
-`,
-		oldTender.Name,
-		oldTender.Description,
-		oldTender.ServiceType,
-		oldTender.Status,
-		oldTender.OrganizationId,
-		oldTender.CreatedAt,
-		id,
-		request.Username,
-	)
-	if row.Err() != nil {
-		slog.Error("failed to update status", "error", row.Err())
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	var tender dtos.TenderResponse
-	if err := row.StructScan(&tender); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return dtos.TenderResponse{}, apperror.Forbidden(errors.New("user doesn't have enough permissions"))
-		}
-
-		slog.Error("failed to scan", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	return tender, nil
 }

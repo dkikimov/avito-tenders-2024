@@ -7,8 +7,8 @@ import (
 )
 
 type EditTenderStatusRequest struct {
-	Status   entity.TenderStatus `json:"status" valid:"required,tender_status"`
-	Username string              `json:"username" valid:"required"`
+	Status   entity.TenderStatus `json:"status"`
+	Username string              `json:"username"`
 }
 
 func (r EditTenderStatusRequest) Validate() error {
@@ -31,5 +31,5 @@ func (t EditTender) Validate() error {
 
 type EditTenderRequest struct {
 	EditTender
-	Username string `json:"username" valid:"required"`
+	Username string `json:"username"`
 }

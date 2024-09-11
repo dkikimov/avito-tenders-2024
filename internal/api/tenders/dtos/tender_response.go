@@ -16,3 +16,25 @@ type TenderResponse struct {
 	Version        int                 `db:"version"`
 	CreatedAt      time.Time           `db:"created_at"`
 }
+
+func NewTenderResponse(tender entity.Tender) TenderResponse {
+	return TenderResponse{
+		Id:             tender.Id,
+		Name:           tender.Name,
+		Description:    tender.Description,
+		ServiceType:    tender.ServiceType,
+		Status:         tender.Status,
+		OrganizationId: tender.OrganizationId,
+		Version:        tender.Version,
+		CreatedAt:      tender.CreatedAt,
+	}
+}
+
+func NewTenderResponseList(tendersList []entity.Tender) []TenderResponse {
+	dtoTenders := make([]TenderResponse, 0, len(tendersList))
+	for i := range tendersList {
+		dtoTenders = append(dtoTenders, NewTenderResponse(tendersList[i]))
+	}
+
+	return dtoTenders
+}

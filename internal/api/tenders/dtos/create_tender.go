@@ -15,6 +15,17 @@ type CreateTenderRequest struct {
 	CreatorUsername string              `json:"creatorUsername"`
 }
 
+func (c CreateTenderRequest) ToEntity() entity.Tender {
+	return entity.Tender{
+		Name:            c.Name,
+		Description:     c.Description,
+		ServiceType:     c.ServiceType,
+		Status:          c.Status,
+		OrganizationId:  c.OrganizationId,
+		CreatorUsername: c.CreatorUsername,
+	}
+}
+
 func (c CreateTenderRequest) Validate() error {
 	return validation.ValidateStruct(&c,
 		validation.Field(&c.Name, validation.Required, validation.Length(3, 50)),
