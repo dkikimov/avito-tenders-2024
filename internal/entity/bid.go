@@ -27,6 +27,12 @@ const (
 
 type AuthorType string
 
+func (t AuthorType) ValidationRule() validation.Rule {
+	return validation.In(
+		AuthorOrganization,
+		AuthorUser)
+}
+
 const (
 	AuthorOrganization AuthorType = "Organization"
 	AuthorUser         AuthorType = "User"
@@ -47,15 +53,13 @@ const (
 )
 
 type Bid struct {
-	Id              string     `json:"id" db:"id"`
-	Name            string     `json:"name" db:"name"`
-	Description     string     `json:"description" db:"description"`
-	Status          BidStatus  `json:"status" db:"status"`
-	TenderId        int        `json:"tenderId" db:"tender_id"`
-	AuthorType      AuthorType `json:"authorType" db:"author_type"`
-	AuthorId        string     `json:"authorId" db:"author_id"`
-	OrganizationId  int        `json:"organizationId" db:"organization_id"`
-	CreatorUsername string     `json:"creatorUsername" db:"creator_username"`
-	Version         int        `json:"version" db:"version"`
-	CreatedAt       time.Time  `json:"createdAt" db:"created_at"`
+	Id          string     `json:"id" db:"id"`
+	Name        string     `json:"name" db:"name"`
+	Description string     `json:"description" db:"description"`
+	Status      BidStatus  `json:"status" db:"status"`
+	TenderId    string     `json:"tenderId" db:"tender_id"`
+	AuthorType  AuthorType `json:"authorType" db:"author_type"`
+	AuthorId    string     `json:"authorId" db:"author_id"`
+	Version     int        `json:"version" db:"version"`
+	CreatedAt   time.Time  `json:"createdAt" db:"created_at"`
 }

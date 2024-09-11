@@ -7,26 +7,29 @@ import (
 )
 
 type CreateBidRequest struct {
-	Name            string           `json:"name"`
-	Description     string           `json:"description"`
-	Status          entity.BidStatus `json:"status"`
-	TenderId        string           `json:"tender_id"`
-	OrganizationId  int              `json:"organization_id"`
-	CreatorUsername string           `json:"creator_username"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	TenderId    string            `json:"tenderId"`
+	AuthorType  entity.AuthorType `json:"authorType"`
+	AuthorId    string            `json:"authorId"`
+}
+
+func (r CreateBidRequest) ToEntity() entity.Bid {
+	return entity.Bid{
+		Name:        r.Name,
+		Description: r.Description,
+		TenderId:    r.TenderId,
+		AuthorType:  r.AuthorType,
+		AuthorId:    r.AuthorId,
+	}
 }
 
 func (r CreateBidRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Name, validation.Required),
-		validation.Field(&r.Description, validation.Required),
-		validation.Field(&r.Status, validation.Required, validation.In(
-			entity.BidApproved,
-			entity.BidCanceled,
-			entity.BidCreated,
-			entity.BidPublished,
-			entity.BidRejected,
-		)),
-		validation.Field(&r.OrganizationId, validation.Required),
-		validation.Field(&r.CreatorUsername, validation.Required),
+		validation.Field(&r.Name, validation.Required, validation.Length(1, 100)),
+		validation.Field(&r.Description, validation.Required, validation.Length(1, 500)),
+		validation.Field(&r.TenderId, validation.Required, validation.Length(1, 100)),
+		validation.Field(&r.AuthorType, validation.Required, r.AuthorType.ValidationRule()),
+		validation.Field(&r.AuthorId, validation.Required, validation.Length(1, 100)),
 	)
 }

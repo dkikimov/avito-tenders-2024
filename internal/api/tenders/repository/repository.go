@@ -18,11 +18,15 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
-type repository struct {
+type Repository struct {
 	db *sqlx.DB
 }
 
-func (r repository) FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Tender, error) {
+func NewRepository(db *sqlx.DB) *Repository {
+	return &Repository{db: db}
+}
+
+func (r Repository) FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select tender_id as id, name, description, service_type, status, organization_id, version, created_at from tenders_history
 		where tender_id = $1 and version = $2`,
@@ -44,11 +48,7 @@ func (r repository) FindByIDFromHistory(ctx context.Context, id string, version 
 	return oldTender, nil
 }
 
-func NewRepository(db *sqlx.DB) tenders.Repository {
-	return &repository{db: db}
-}
-
-func (r repository) Create(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
+func (r Repository) Create(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		INSERT INTO tenders(name, description, service_type, status, organization_id, creator_username) 
 		VALUES($1,$2,$3,$4,$5,$6)
@@ -79,7 +79,7 @@ func (r repository) Create(ctx context.Context, tender entity.Tender) (entity.Te
 	return result, nil
 }
 
-func (r repository) Update(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
+func (r Repository) Update(ctx context.Context, tender entity.Tender) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		update tenders set
 		                   name = $1,
@@ -116,7 +116,7 @@ func (r repository) Update(ctx context.Context, tender entity.Tender) (entity.Te
 	return result, nil
 }
 
-func (r repository) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error) {
+func (r Repository) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -151,7 +151,7 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 	return tenderList, nil
 }
 
-func (r repository) FindById(ctx context.Context, id string) (entity.Tender, error) {
+func (r Repository) FindById(ctx context.Context, id string) (entity.Tender, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where id = $1`,
@@ -175,7 +175,7 @@ func (r repository) FindById(ctx context.Context, id string) (entity.Tender, err
 	return tender, nil
 }
 
-func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]entity.Tender, error) {
+func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]entity.Tender, error) {
 	var filterValues = make([]interface{}, 0)
 
 	query := strings.Builder{}
@@ -208,7 +208,7 @@ func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 	return tenderList, nil
 }
 
-func (r repository) EditStatus(ctx context.Context, request models.EditTenderStatus) (entity.Tender, error) {
+func (r Repository) EditStatus(ctx context.Context, request models.EditTenderStatus) (entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -251,7 +251,7 @@ func (r repository) EditStatus(ctx context.Context, request models.EditTenderSta
 	return tender, nil
 }
 
-func (r repository) Edit(ctx context.Context, editTender models.EditTender) (entity.Tender, error) {
+func (r Repository) Edit(ctx context.Context, editTender models.EditTender) (entity.Tender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -307,7 +307,7 @@ func (r repository) Edit(ctx context.Context, editTender models.EditTender) (ent
 	return tender, nil
 }
 
-func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username string) (bool, error) {
+func (r Repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username string) (bool, error) {
 	var id string
 	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
 	if row.Err() != nil {

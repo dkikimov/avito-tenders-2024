@@ -7,10 +7,12 @@ import (
 )
 
 var (
-	ErrInvalidInput     = errors.New("invalid input")
-	ErrUserDoesNotExist = errors.New("user does not exist")
-	ErrInternal         = errors.New("internal error")
-	ErrNotFound         = errors.New("not found")
+	ErrInvalidInput             = errors.New("invalid input")
+	ErrUserDoesNotExist         = errors.New("user does not exist")
+	ErrOrganizationDoesNotExist = errors.New("organization does not exist")
+	ErrUnauthorized             = errors.New("unauthorized")
+	ErrInternal                 = errors.New("internal error")
+	ErrNotFound                 = errors.New("not found")
 )
 
 type AppError struct {
