@@ -23,13 +23,7 @@ func (u *usecase) Create(ctx context.Context, request dtos.CreateTenderRequest) 
 }
 
 func (u *usecase) Edit(ctx context.Context, id string, request dtos.EditTenderRequest) (dtos.TenderResponse, error) {
-	var idInt int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return dtos.TenderResponse{}, apperror.BadRequest(errors.New("tender id is not number"))
-	}
-
-	return u.repo.Edit(ctx, idInt, request)
+	return u.repo.Edit(ctx, id, request)
 }
 
 func (u *usecase) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]dtos.TenderResponse, error) {
@@ -37,13 +31,7 @@ func (u *usecase) GetAll(ctx context.Context, filter tenders.TenderFilter, pagin
 }
 
 func (u *usecase) GetTenderStatus(ctx context.Context, id string, request dtos.TenderStatus) (dtos.TenderResponse, error) {
-	var idInt int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return dtos.TenderResponse{}, apperror.BadRequest(errors.New("tender id is not number"))
-	}
-
-	tender, err := u.repo.FindById(ctx, idInt)
+	tender, err := u.repo.FindById(ctx, id)
 	if err != nil {
 		return dtos.TenderResponse{}, err
 	}
@@ -74,27 +62,16 @@ func (u *usecase) FindByUsername(ctx context.Context, username string, paginatio
 }
 
 func (u *usecase) EditStatus(ctx context.Context, id string, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error) {
-	var idInt int
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return dtos.TenderResponse{}, apperror.BadRequest(errors.New("tender id is not number"))
-	}
-
-	return u.repo.EditStatus(ctx, idInt, request)
+	return u.repo.EditStatus(ctx, id, request)
 }
 
 func (u *usecase) Rollback(ctx context.Context, id string, request dtos.RollbackTenderRequest) (dtos.TenderResponse, error) {
-	idInt, err := strconv.Atoi(id)
-	if err != nil {
-		return dtos.TenderResponse{}, apperror.BadRequest(errors.New("tender id is not number"))
-	}
-
 	versionInt, err := strconv.Atoi(request.Version)
 	if err != nil {
 		return dtos.TenderResponse{}, apperror.BadRequest(errors.New("version is not number"))
 	}
 
-	return u.repo.Rollback(ctx, idInt, dtos.RollbackTender{
+	return u.repo.Rollback(ctx, id, dtos.RollbackTender{
 		Username: request.Username,
 		Version:  versionInt,
 	})

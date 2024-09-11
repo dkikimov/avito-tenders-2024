@@ -14,10 +14,10 @@ type TenderFilter struct {
 
 type Repository interface {
 	Create(ctx context.Context, request dtos.CreateTenderRequest) (dtos.TenderResponse, error)
-	Edit(ctx context.Context, id int, request dtos.EditTenderRequest) (dtos.TenderResponse, error)
+	Edit(ctx context.Context, id string, request dtos.EditTenderRequest) (dtos.TenderResponse, error)
 	GetAll(ctx context.Context, filter TenderFilter, pagination queryparams.Pagination) ([]dtos.TenderResponse, error)
-	FindById(ctx context.Context, id int) (dtos.TenderResponse, error)
+	FindById(ctx context.Context, id string) (dtos.TenderResponse, error)
 	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.TenderResponse, error)
-	EditStatus(ctx context.Context, id int, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error)
-	Rollback(ctx context.Context, id int, request dtos.RollbackTender) (dtos.TenderResponse, error)
+	EditStatus(ctx context.Context, id string, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error)
+	Rollback(ctx context.Context, id string, request dtos.RollbackTender) (dtos.TenderResponse, error)
 }

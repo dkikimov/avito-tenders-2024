@@ -11,7 +11,7 @@ const (
 )
 
 type Organization struct {
-	Id          int
+	Id          string
 	Name        string
 	Description string
 	Type        OrganizationType
@@ -20,7 +20,7 @@ type Organization struct {
 }
 
 type OrganizationResponsible struct {
-	Id             int
+	Id             string
 	OrganizationId int
 	UserId         int
 }

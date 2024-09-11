@@ -91,7 +91,7 @@ func (r repository) FindByUsername(ctx context.Context, username string, paginat
 	return tenderList, nil
 }
 
-func (r repository) FindById(ctx context.Context, id int) (dtos.TenderResponse, error) {
+func (r repository) FindById(ctx context.Context, id string) (dtos.TenderResponse, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where id = $1`,
@@ -149,7 +149,7 @@ func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 	return tenderList, nil
 }
 
-func (r repository) EditStatus(ctx context.Context, id int, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error) {
+func (r repository) EditStatus(ctx context.Context, id string, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -174,7 +174,7 @@ func (r repository) EditStatus(ctx context.Context, id int, request dtos.EditTen
 		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var tenderId int
+	var tenderId string
 	if err := row.Scan(&tenderId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
@@ -208,7 +208,7 @@ func (r repository) EditStatus(ctx context.Context, id int, request dtos.EditTen
 	return tender, nil
 }
 
-func (r repository) Edit(ctx context.Context, id int, request dtos.EditTenderRequest) (dtos.TenderResponse, error) {
+func (r repository) Edit(ctx context.Context, id string, request dtos.EditTenderRequest) (dtos.TenderResponse, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -233,7 +233,7 @@ func (r repository) Edit(ctx context.Context, id int, request dtos.EditTenderReq
 		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var tenderId int
+	var tenderId string
 	if err := row.Scan(&tenderId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
@@ -281,7 +281,7 @@ func (r repository) Edit(ctx context.Context, id int, request dtos.EditTenderReq
 }
 
 func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username string) (bool, error) {
-	var id int
+	var id string
 	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
 	if row.Err() != nil {
 		slog.Error("failed to select", row.Err())
@@ -300,7 +300,7 @@ func (r repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username str
 	return true, nil
 }
 
-func (r repository) Rollback(ctx context.Context, id int, request dtos.RollbackTender) (dtos.TenderResponse, error) {
+func (r repository) Rollback(ctx context.Context, id string, request dtos.RollbackTender) (dtos.TenderResponse, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -317,11 +317,10 @@ func (r repository) Rollback(ctx context.Context, id int, request dtos.RollbackT
 	// Check does tender exist.
 	row := r.db.QueryRowxContext(ctx, `select id from tenders where id = $1`, id)
 	if row.Err() != nil {
-		slog.Error("failed to select id tender", "error", err)
-		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
+		return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
 	}
 
-	var tenderId int
+	var tenderId string
 	if err := row.Scan(&tenderId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return dtos.TenderResponse{}, apperror.NotFound(apperror.ErrNotFound)
@@ -333,11 +332,11 @@ func (r repository) Rollback(ctx context.Context, id int, request dtos.RollbackT
 
 	// Get old version
 	row = r.db.QueryRowxContext(ctx, `
-		select id, name, description, service_type, status, organization_id, version, created_at from tender_history 
+		select tender_id as id, name, description, service_type, status, organization_id, version, created_at from tenders_history 
 		where tender_id = $1 and version = $2`,
 		id, request.Version)
 	if row.Err() != nil {
-		slog.Error("failed to select id tender", "error", err)
+		slog.Error("failed to select id tender", "error", row.Err())
 		return dtos.TenderResponse{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 

@@ -16,7 +16,7 @@ type repository struct {
 	db *sqlx.DB
 }
 
-func (r repository) IsOrganizationResponsible(ctx context.Context, organizationID int, username string) (bool, error) {
+func (r repository) IsOrganizationResponsible(ctx context.Context, organizationID string, username string) (bool, error) {
 	row := r.db.QueryRowxContext(ctx, `
 		select o.id from organization_responsible o
 		          join employee e on e.username = $1
@@ -28,7 +28,7 @@ func (r repository) IsOrganizationResponsible(ctx context.Context, organizationI
 		return false, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
-	var id int
+	var id string
 	if err := row.Scan(&id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil

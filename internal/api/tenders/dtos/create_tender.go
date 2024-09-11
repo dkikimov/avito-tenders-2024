@@ -11,7 +11,7 @@ type CreateTenderRequest struct {
 	Description     string              `json:"description"`
 	ServiceType     entity.ServiceType  `json:"serviceType"`
 	Status          entity.TenderStatus `json:"status"`
-	OrganizationId  int                 `json:"organizationId"`
+	OrganizationId  string              `json:"organizationId"`
 	CreatorUsername string              `json:"creatorUsername"`
 }
 
