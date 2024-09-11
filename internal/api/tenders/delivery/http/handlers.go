@@ -1,4 +1,4 @@
-package delivery
+package http
 
 import (
 	"encoding/json"
@@ -9,12 +9,13 @@ import (
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
+	"github.com/invopop/validation"
 
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
-	"avito-tenders/pkg/query"
+	"avito-tenders/pkg/queryparams"
 )
 
 type Handlers struct {
@@ -65,7 +66,7 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pagination, err := query.ParsePagination(values)
+	pagination, err := queryparams.ParsePagination(values)
 	if err != nil {
 		apperror.SendError(w, err)
 		slog.Error("couldn't parse pagination", "error", err)
@@ -85,6 +86,47 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handlers) GetTenders(w http.ResponseWriter, r *http.Request) {
+	values := r.URL.Query()
+
+	// Parse pagination.
+	pagination, err := queryparams.ParsePagination(values)
+	if err != nil {
+		apperror.SendError(w, err)
+		slog.Error("couldn't parse pagination", "error", err)
+		return
+	}
+
+	// Parse service types.
+	serviceTypesStrings := values["service_type"]
+	serviceTypeList := make([]entity.ServiceType, 0, len(serviceTypesStrings))
+	for _, serviceTypeString := range serviceTypesStrings {
+		serviceType := entity.ServiceType(serviceTypeString)
+
+		if err := validation.Validate(serviceType, serviceType.ValidationRules()); err != nil {
+			apperror.SendError(w, apperror.BadRequest(err))
+			return
+		}
+
+		serviceTypeList = append(serviceTypeList, serviceType)
+	}
+
+	// Getting all tenders with filter.
+	createdTender, err := h.uc.GetAll(r.Context(), tenders.TenderFilter{
+		ServiceTypes: serviceTypeList,
+	}, pagination)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(createdTender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
 func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 	tenderId := chi.URLParam(r, tenderIdPathParam)
 	if tenderId == "" {
@@ -92,7 +134,11 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.FindById(r.Context(), tenderId)
+	request := entities.TenderStatus{
+		Username: r.URL.Query().Get("username"),
+	}
+
+	tender, err := h.uc.GetTenderStatus(r.Context(), tenderId, request)
 	if err != nil {
 		apperror.SendError(w, err)
 		return

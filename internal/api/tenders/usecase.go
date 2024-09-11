@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"avito-tenders/internal/api/tenders/entities"
-	"avito-tenders/pkg/query"
+	"avito-tenders/pkg/queryparams"
 )
 
 type ListOpts struct {
@@ -15,7 +15,7 @@ type Usecase interface {
 	Edit(ctx context.Context, id string, request entities.EditTenderRequest) (entities.ResponseTender, error)
 	EditStatus(ctx context.Context, id string, request entities.EditTenderStatusRequest) (entities.ResponseTender, error)
 	Rollback(ctx context.Context, id string, request entities.RollbackTenderRequest) (entities.ResponseTender, error)
-	FindList(ctx context.Context, id string) ([]entities.ResponseTender, error)
-	FindById(ctx context.Context, id string) (entities.ResponseTender, error)
-	FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error)
+	GetAll(ctx context.Context, filter TenderFilter, pagination queryparams.Pagination) ([]entities.ResponseTender, error)
+	GetTenderStatus(ctx context.Context, id string, request entities.TenderStatus) (entities.ResponseTender, error)
+	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entities.ResponseTender, error)
 }

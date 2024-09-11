@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
@@ -13,7 +14,7 @@ import (
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/entities"
 	"avito-tenders/pkg/apperror"
-	"avito-tenders/pkg/query"
+	"avito-tenders/pkg/queryparams"
 )
 
 type repository struct {
@@ -55,7 +56,7 @@ func (r repository) Create(ctx context.Context, request entities.CreateTenderReq
 	return result, nil
 }
 
-func (r repository) FindByUsername(ctx context.Context, username string, pagination query.Pagination) ([]entities.ResponseTender, error) {
+func (r repository) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entities.ResponseTender, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		slog.Error("failed to begin transaction", "error", err)
@@ -114,13 +115,35 @@ func (r repository) FindById(ctx context.Context, id int) (entities.ResponseTend
 	return tender, nil
 }
 
-func (r repository) GetAll(ctx context.Context) ([]entities.ResponseTender, error) {
-	var tenderList = make([]entities.ResponseTender, 0)
+func (r repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]entities.ResponseTender, error) {
+	var filterValues = make([]interface{}, 0)
 
-	err := r.db.SelectContext(ctx, tenderList, `
-		select id, name, description, service_type, status, organization_id, version, created_at from tenders`)
+	query := strings.Builder{}
+	query.WriteString(`select id, name, description, service_type, status, organization_id, version, created_at from tenders 
+    					where status = 'Published' `)
+
+	if len(filter.ServiceTypes) > 0 {
+		query.WriteString("and service_type IN (")
+
+		for i, service := range filter.ServiceTypes {
+			query.WriteString(fmt.Sprintf("$%d", len(filterValues)+1))
+			filterValues = append(filterValues, service)
+			if i != len(filter.ServiceTypes)-1 {
+				query.WriteString(",")
+			}
+		}
+		query.WriteString(") ")
+	}
+
+	query.WriteString(fmt.Sprintf("limit $%d offset $%d", len(filterValues)+1, len(filterValues)+2))
+	filterValues = append(filterValues, pagination.Limit, pagination.Offset)
+
+	var tenderList = make([]entities.ResponseTender, 0)
+	slog.Info(query.String())
+	err := r.db.SelectContext(ctx, &tenderList, query.String(), filterValues...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to select: %w", err)
+		slog.Error("failed to get all tenders", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return tenderList, nil

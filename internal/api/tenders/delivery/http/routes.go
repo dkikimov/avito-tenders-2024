@@ -1,4 +1,4 @@
-package delivery
+package http
 
 import (
 	"fmt"
@@ -13,6 +13,7 @@ const (
 
 func (h *Handlers) MapTendersRoutes(r chi.Router) {
 	r.Route("/tenders", func(r chi.Router) {
+		r.Get("/", h.GetTenders)
 		r.Post("/new", h.CreateTender)
 		r.Get("/my", h.GetMyTenders)
 		r.Get(fmt.Sprintf("/{%s}/status", tenderIdPathParam), h.GetTenderStatus)
