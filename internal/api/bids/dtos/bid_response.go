@@ -27,3 +27,13 @@ func NewBidResponse(bid entity.Bid) BidResponse {
 		CreatedAt:  bid.CreatedAt,
 	}
 }
+
+func NewBidResponseList(bids []entity.Bid) []BidResponse {
+	bidsResponseList := make([]BidResponse, 0, len(bids))
+
+	for i := range bids {
+		bidsResponseList = append(bidsResponseList, NewBidResponse(bids[i]))
+	}
+
+	return bidsResponseList
+}

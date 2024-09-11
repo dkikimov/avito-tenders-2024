@@ -8,10 +8,12 @@ import (
 
 	"avito-tenders/internal/api/bids"
 	"avito-tenders/internal/api/bids/dtos"
+	"avito-tenders/internal/api/bids/models"
 	"avito-tenders/internal/api/employee"
 	"avito-tenders/internal/api/organization"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
+	"avito-tenders/pkg/queryparams"
 )
 
 type usecase struct {
@@ -73,9 +75,16 @@ func (u usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 	return dtos.NewBidResponse(result), nil
 }
 
-func (u usecase) FindByUsername(ctx context.Context, username string) ([]dtos.BidResponse, error) {
-	// TODO implement me
-	panic("implement me")
+func (u usecase) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.BidResponse, error) {
+	bidsList, err := u.repo.FindByUsername(ctx, models.FindByUsername{
+		Username:   username,
+		Pagination: pagination,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewBidResponseList(bidsList), nil
 }
 
 func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {

@@ -7,5 +7,6 @@ import (
 func (h *Handlers) MapBidsRoutes(r chi.Router) {
 	r.Route("/bids", func(r chi.Router) {
 		r.Post("/new", h.CreateBid)
+		r.Get("/my", h.GetMyBids)
 	})
 }

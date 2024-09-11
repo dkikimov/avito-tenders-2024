@@ -6,7 +6,7 @@ create table bids
     status      text not null,
     tender_id   uuid references tenders (id),
     author_type text not null,
-    author_id   text not null,
+    author_id   uuid not null,
     version     int  not null    default 1,
     created_at  timestamp        default now()
 );

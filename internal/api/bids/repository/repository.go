@@ -53,9 +53,21 @@ func (r Repository) Create(ctx context.Context, bid entity.Bid) (entity.Bid, err
 	return createdBid, nil
 }
 
-func (r Repository) FindByUsername(ctx context.Context, username string) (entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+func (r Repository) FindByUsername(ctx context.Context, req models.FindByUsername) ([]entity.Bid, error) {
+	var bidsList []entity.Bid
+
+	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
+		select b.id, b.name, b.description, b.status, b.tender_id, b.author_type, b.author_id, b.version, b.created_at from bids b 
+		join employee e on e.id = b.author_id
+		where e.username = $1
+		limit $2 offset $3
+`, req.Username, req.Limit, req.Offset)
+	if err != nil {
+		slog.Error("couldn't find bids by username", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return bidsList, nil
 }
 
 func (r Repository) FindByID(ctx context.Context, id string) (entity.Bid, error) {

@@ -62,7 +62,7 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 
 	username := values.Get("username")
 	if len(username) == 0 {
-		apperror.SendError(w, apperror.BadRequest(apperror.ErrInvalidInput))
+		apperror.SendError(w, apperror.Unauthorized(errors.New("username is required")))
 		return
 	}
 

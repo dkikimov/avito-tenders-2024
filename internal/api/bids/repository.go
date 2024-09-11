@@ -9,7 +9,7 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, bid entity.Bid) (entity.Bid, error)
-	FindByUsername(ctx context.Context, username string) (entity.Bid, error)
+	FindByUsername(ctx context.Context, req models.FindByUsername) ([]entity.Bid, error)
 	FindByID(ctx context.Context, id string) (entity.Bid, error)
 	FindByTenderId(ctx context.Context, req models.FindByTenderId) ([]entity.Bid, error)
 	Update(ctx context.Context, bid entity.Bid) (entity.Bid, error)
