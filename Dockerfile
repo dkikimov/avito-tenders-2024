@@ -23,6 +23,7 @@ WORKDIR /server
 
 # Copy the binary from the build stage
 COPY --from=build /server/webserver .
+COPY --from=build /server/migrations ./migrations
 
 # Hardcode as it's required for deployment
 EXPOSE 8080

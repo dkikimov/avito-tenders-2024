@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+
 	"avito-tenders/config"
 	"avito-tenders/internal/api"
 	"avito-tenders/pkg/backend"
@@ -18,6 +20,8 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("Failed to initialize backend: %v", err)
 	}
+
+	Migrate(back)
 
 	routes, err := api.InitAPIRoutes(back)
 	if err != nil {
