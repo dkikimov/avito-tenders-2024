@@ -23,7 +23,7 @@ CREATE TABLE bids_history
     version     int       not null,
     created_at  timestamp,
     modified_at timestamp not null default now(),
-    primary key (name, version)
+    primary key (bid_id, version)
 );
 
 CREATE OR REPLACE FUNCTION log_bid_update() RETURNS TRIGGER AS

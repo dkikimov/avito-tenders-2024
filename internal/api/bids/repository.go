@@ -13,7 +13,7 @@ type Repository interface {
 	FindByID(ctx context.Context, id string) (entity.Bid, error)
 	FindByTenderId(ctx context.Context, req models.FindByTenderId) ([]entity.Bid, error)
 	Update(ctx context.Context, bid entity.Bid) (entity.Bid, error)
-	FindByIDFromHistory(ctx context.Context, id string) (entity.Bid, error)
+	FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Bid, error)
 	SendFeedback(ctx context.Context, req models.SendFeedback) (entity.Bid, error)
 	FindReviews(ctx context.Context, req models.FindReview) ([]entity.Bid, error)
 	SubmitApproveDecision(ctx context.Context, bidId string, userId string) error

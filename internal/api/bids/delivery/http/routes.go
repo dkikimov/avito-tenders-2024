@@ -11,6 +11,7 @@ import (
 const (
 	tenderIdPathParam = "tenderId"
 	bidIdPathParam    = "bidId"
+	versionPathParam  = "version"
 )
 
 func (h *Handlers) MapBidsRoutes(r chi.Router, mw *middlewares.Manager) {
@@ -21,6 +22,7 @@ func (h *Handlers) MapBidsRoutes(r chi.Router, mw *middlewares.Manager) {
 		r.Put(fmt.Sprintf("/{%s}/status", bidIdPathParam), middlewares.Conveyor(h.UpdateBidStatus, mw.UserExistsMiddleware))
 		r.Get(fmt.Sprintf("/{%s}/list", tenderIdPathParam), middlewares.Conveyor(h.FindBidsByTender, mw.UserExistsMiddleware, mw.PaginationMiddleware))
 		r.Patch(fmt.Sprintf("/{%s}/edit", bidIdPathParam), middlewares.Conveyor(h.EditBid, mw.UserExistsMiddleware))
+		r.Put(fmt.Sprintf("/{%s}/rollback/{%s}", bidIdPathParam, versionPathParam), middlewares.Conveyor(h.Rollback, mw.UserExistsMiddleware))
 
 		r.Put(fmt.Sprintf("/{%s}/submit_decision", bidIdPathParam), middlewares.Conveyor(h.SubmitDecision, mw.UserExistsMiddleware))
 	})

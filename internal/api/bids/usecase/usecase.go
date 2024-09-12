@@ -271,8 +271,25 @@ func (u usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest)
 }
 
 func (u usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error) {
-	// TODO implement me
-	panic("implement me")
+	oldBid, err := u.repo.FindByIDFromHistory(ctx, req.BidId, req.Version)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	responsible, err := u.AuthorHasPermissions(ctx, oldBid, req.Username)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+	if !responsible {
+		return dtos.BidResponse{}, apperror.Forbidden(apperror.ErrUnauthorized)
+	}
+
+	updatedBid, err := u.repo.Update(ctx, oldBid)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	return dtos.NewBidResponse(updatedBid), nil
 }
 
 func (u usecase) FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error) {

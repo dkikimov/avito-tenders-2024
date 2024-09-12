@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 
@@ -241,6 +242,50 @@ func (h *Handlers) SubmitDecision(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(updatedBid); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
+func (h *Handlers) Rollback(w http.ResponseWriter, r *http.Request) {
+	bidId := chi.URLParam(r, bidIdPathParam)
+	if bidId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+		return
+	}
+
+	version := chi.URLParam(r, versionPathParam)
+	if version == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("version is not specified")))
+		return
+	}
+
+	versionInt, err := strconv.Atoi(version)
+	if err != nil {
+		apperror.SendError(w, apperror.BadRequest(errors.New("version is not a number")))
+		return
+	}
+
+	username := fwcontext.GetUsername(r.Context())
+
+	request := dtos.RollbackRequest{
+		BidId:    bidId,
+		Version:  versionInt,
+		Username: username,
+	}
+	if err := request.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.Rollback(r.Context(), request)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }
