@@ -191,23 +191,3 @@ func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 
 	return tenderList, nil
 }
-
-func (r Repository) DoesUserExist(ctx context.Context, tx *sqlx.Tx, username string) (bool, error) {
-	var id string
-	row := tx.QueryRowxContext(ctx, "select id from employee e where username = $1", username)
-	if row.Err() != nil {
-		slog.Error("failed to select", row.Err())
-		return false, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	if err := row.Scan(&id); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
-		}
-
-		slog.Error("failed to scan", row.Err())
-		return false, apperror.InternalServerError(apperror.ErrInternal)
-	}
-
-	return true, nil
-}
