@@ -33,3 +33,11 @@ type EditTenderRequest struct {
 	EditTender
 	Username string `json:"username"`
 }
+
+func (r EditTenderRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Username, validation.Required),
+		validation.Field(&r.Name, validation.Length(1, 100)),
+		validation.Field(&r.Description, validation.Length(1, 500)),
+		validation.Field(&r.ServiceType, r.ServiceType.ValidationRule()))
+}

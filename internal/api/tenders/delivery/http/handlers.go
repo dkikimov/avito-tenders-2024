@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -16,7 +15,7 @@ import (
 	"avito-tenders/internal/api/tenders/dtos"
 	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
-	"avito-tenders/pkg/queryparams"
+	"avito-tenders/pkg/fwcontext"
 )
 
 type Handlers struct {
@@ -59,20 +58,8 @@ func (h *Handlers) CreateTender(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
-	values := r.URL.Query()
-
-	username := values.Get("username")
-	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
-		return
-	}
-
-	pagination, err := queryparams.ParseQueryPagination(values)
-	if err != nil {
-		apperror.SendError(w, err)
-		slog.Error("couldn't parse pagination", "error", err)
-		return
-	}
+	username := fwcontext.GetUsername(r.Context())
+	pagination := fwcontext.GetPagination(r.Context())
 
 	createdTender, err := h.uc.FindByUsername(r.Context(), username, pagination)
 	if err != nil {
@@ -90,13 +77,7 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetTenders(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 
-	// Parse pagination.
-	pagination, err := queryparams.ParseQueryPagination(values)
-	if err != nil {
-		apperror.SendError(w, err)
-		slog.Error("couldn't parse pagination", "error", err)
-		return
-	}
+	pagination := fwcontext.GetPagination(r.Context())
 
 	// Parse service types.
 	serviceTypesStrings := values["service_type"]
@@ -163,7 +144,7 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 
 	req := dtos.EditTenderStatusRequest{
 		Status:   entity.TenderStatus(urlQuery.Get("status")),
-		Username: urlQuery.Get("username"),
+		Username: fwcontext.GetUsername(r.Context()),
 	}
 
 	if err := req.Validate(); err != nil {
@@ -191,12 +172,7 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlQuery := r.URL.Query()
-	username := urlQuery.Get("username")
-	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
-		return
-	}
+	username := fwcontext.GetUsername(r.Context())
 
 	// Parse body to EditTender.
 	body, err := io.ReadAll(r.Body)
@@ -216,10 +192,16 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.Edit(r.Context(), tenderId, dtos.EditTenderRequest{
+	req := dtos.EditTenderRequest{
 		EditTender: edit,
 		Username:   username,
-	})
+	}
+	if err := req.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.Edit(r.Context(), tenderId, req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -245,12 +227,7 @@ func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	urlQuery := r.URL.Query()
-	username := urlQuery.Get("username")
-	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
-		return
-	}
+	username := fwcontext.GetUsername(r.Context())
 
 	intVersion, err := strconv.Atoi(version)
 	if err != nil {
