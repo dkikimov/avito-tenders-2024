@@ -20,6 +20,7 @@ func Run(cfg *config.Config) {
 	if err != nil {
 		log.Fatalf("Failed to initialize backend: %v", err)
 	}
+	defer back.DB.Close()
 
 	Migrate(back)
 
