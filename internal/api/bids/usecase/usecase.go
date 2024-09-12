@@ -182,8 +182,87 @@ func (u usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequ
 }
 
 func (u usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error) {
-	// TODO implement me
-	panic("implement me")
+	var resultBid dtos.BidResponse
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		bid, err := u.repo.FindByID(ctx, req.BidId)
+		if err != nil {
+			return err
+		}
+
+		tender, err := u.tendRepo.FindById(ctx, bid.TenderId)
+		if err != nil {
+			return err
+		}
+
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		if err != nil {
+			return err
+		}
+		if !isResponsible {
+			return apperror.Forbidden(apperror.ErrForbidden)
+		}
+
+		if req.Decision == entity.DecisionRejected {
+			newBid := bid
+			newBid.Status = entity.BidRejected
+
+			updatedBid, err := u.repo.Update(ctx, newBid)
+			if err != nil {
+				return err
+			}
+
+			resultBid = dtos.NewBidResponse(updatedBid)
+
+			return nil
+		} else if req.Decision == entity.DecisionApproved {
+			user, err := u.empRepo.FindByUsername(ctx, req.Username)
+			if err != nil {
+				return err
+			}
+
+			err = u.repo.SubmitApproveDecision(ctx, bid.Id, user.Id)
+			if err != nil {
+				return err
+			}
+
+			approveBidCount, err := u.repo.GetBidApproveAmount(ctx, bid.Id)
+			if err != nil {
+				return err
+			}
+
+			responsibleList, err := u.orgRepo.GetOrganizationResponsible(ctx, tender.OrganizationId)
+			if err != nil {
+				return err
+			}
+
+			if approveBidCount >= min(3, len(responsibleList)) {
+				// Update bid status
+				newBid := bid
+				newBid.Status = entity.BidApproved
+
+				updatedBid, err := u.repo.Update(ctx, newBid)
+				if err != nil {
+					return err
+				}
+				resultBid = dtos.NewBidResponse(updatedBid)
+
+				// Update tender status
+				newTender := tender
+				newTender.Status = entity.TenderClosed
+				_, err = u.tendRepo.Update(ctx, newTender)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	return resultBid, nil
 }
 
 func (u usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error) {

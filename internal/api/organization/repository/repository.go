@@ -22,6 +22,18 @@ func NewRepository(db *sqlx.DB, g *trmsqlx.CtxGetter) *Repository {
 	return &Repository{db: db, getter: g}
 }
 
+func (r Repository) GetOrganizationResponsible(ctx context.Context, organizationID string) ([]string, error) {
+	var responsibleList []string
+	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &responsibleList, `
+		select user_id from organization_responsible
+		where organization_id = $1`, organizationID)
+	if err != nil {
+		return nil, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	return responsibleList, nil
+}
+
 func (r Repository) GetUserOrganization(ctx context.Context, userId string) (entity.Organization, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 		select o.id, o.name, o.description, o.type, o.created_at, o.updated_at from organization_responsible r

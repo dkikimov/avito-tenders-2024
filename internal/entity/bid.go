@@ -38,9 +38,9 @@ const (
 	AuthorUser         AuthorType = "User"
 )
 
-type Decision string
+type BidDecision string
 
-func (s Decision) ValidationRule() validation.Rule {
+func (s BidDecision) ValidationRule() validation.Rule {
 	return validation.In(
 		DecisionApproved,
 		DecisionRejected,
@@ -48,8 +48,8 @@ func (s Decision) ValidationRule() validation.Rule {
 }
 
 const (
-	DecisionApproved = "Approved"
-	DecisionRejected = "Rejected"
+	DecisionApproved BidDecision = "Approved"
+	DecisionRejected BidDecision = "Rejected"
 )
 
 type Bid struct {

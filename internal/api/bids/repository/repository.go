@@ -20,8 +20,44 @@ type Repository struct {
 	getter *trmsqlx.CtxGetter
 }
 
+func (r Repository) GetBidApproveAmount(ctx context.Context, bidId string) (int, error) {
+	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx,
+		`select count(bid_id) from bids_approvals where bid_id = $1`, bidId)
+	if err := row.Err(); err != nil {
+		return 0, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	return count, nil
+}
+
 func NewRepository(db *sqlx.DB, c *trmsqlx.CtxGetter) *Repository {
 	return &Repository{db: db, getter: c}
+}
+
+func (r Repository) SubmitApproveDecision(ctx context.Context, bidId string, userId string) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		slog.Error("couldn't start transaction", "error", err)
+		return apperror.InternalServerError(apperror.ErrInternal)
+	}
+	defer tx.Rollback()
+
+	tr := r.getter.DefaultTrOrDB(ctx, tx)
+
+	_, err = tr.ExecContext(ctx,
+		`insert into bids_approvals (bid_id, user_id)
+				values ($1, $2) 
+				on conflict do nothing`, bidId, userId)
+	if err != nil {
+		return apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	return nil
 }
 
 func (r Repository) Create(ctx context.Context, bid entity.Bid) (entity.Bid, error) {

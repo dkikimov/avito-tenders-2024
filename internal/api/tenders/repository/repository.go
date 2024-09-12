@@ -165,7 +165,7 @@ func (r Repository) FindById(ctx context.Context, id string) (entity.Tender, err
 	var tender entity.Tender
 	if err := row.StructScan(&tender); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Tender{}, apperror.BadRequest(apperror.ErrNotFound)
+			return entity.Tender{}, apperror.NotFound(apperror.ErrNotFound)
 		}
 
 		slog.Error("failed to scan", "error", err)

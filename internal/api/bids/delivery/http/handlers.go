@@ -209,3 +209,38 @@ func (h *Handlers) EditBid(w http.ResponseWriter, r *http.Request) {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }
+
+func (h *Handlers) SubmitDecision(w http.ResponseWriter, r *http.Request) {
+	username := fwcontext.GetUsername(r.Context())
+
+	bidId := chi.URLParam(r, bidIdPathParam)
+	if bidId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+		return
+	}
+
+	decision := r.URL.Query().Get("decision")
+
+	req := dtos.SubmitDecisionRequest{
+		BidId:    bidId,
+		Decision: entity.BidDecision(decision),
+		Username: username,
+	}
+
+	if err := req.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	updatedBid, err := h.uc.SubmitDecision(r.Context(), req)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(updatedBid); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
