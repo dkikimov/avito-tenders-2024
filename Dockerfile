@@ -24,5 +24,8 @@ WORKDIR /server
 # Copy the binary from the build stage
 COPY --from=build /server/webserver .
 
+# Hardcode as it's required for deployment
+EXPOSE 8080
+
 # Set the entrypoint command
 ENTRYPOINT ["/server/webserver"]
