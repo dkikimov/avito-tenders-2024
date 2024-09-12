@@ -93,7 +93,38 @@ func (u usecase) FindByUsername(ctx context.Context, username string, pagination
 }
 
 func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
+	// u.trManager.Do(ctx, func(ctx context.Context) error {
+	// 	bidsList, err := u.repo.FindByTenderId(ctx, models.FindByTenderId{
+	// 		TenderId:   req.TenderId,
+	// 		Pagination: req.Pagination,
+	// 	})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	// If user is responsible for tender we need to return only `Published` bids
+	// 	tender, err := u.tendRepo.FindByUsername(ctx, req.TenderId)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	//
+	// 	filteredBidsList := make([]dtos.BidResponse, 0, len(bidsList))
+	// 	for _, bid := range bidsList {
+	// 		if isResponsible && bid.Status == entity.BidPublished {
+	// 			filteredBidsList = append(filteredBidsList, dtos.NewBidResponse(bid))
+	// 			continue
+	// 		}
+	//
+	// 		if bid
+	// 	}
+	// })
 	panic("implement me")
+	// Check if user has enough rights.
 }
 
 func (u usecase) GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error) {
@@ -188,4 +219,34 @@ func (u usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 	}
 
 	return true, nil
+}
+
+func (u usecase) Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error) {
+	bid, err := u.repo.FindByID(ctx, req.BidId)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	has, err := u.AuthorHasPermissions(ctx, bid, req.Username)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+	if !has {
+		return dtos.BidResponse{}, apperror.Forbidden(apperror.ErrForbidden)
+	}
+
+	newBid := bid
+	if len(req.Name) != 0 {
+		newBid.Name = req.Name
+	}
+	if len(req.Description) != 0 {
+		newBid.Description = req.Description
+	}
+
+	updatedBid, err := u.repo.Update(ctx, newBid)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	return dtos.NewBidResponse(updatedBid), nil
 }

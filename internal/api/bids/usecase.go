@@ -14,6 +14,7 @@ type Usecase interface {
 	FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error)
 	GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error)
 	UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error)
+	Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error)
 	SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error)
 	SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error)
 	Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error)

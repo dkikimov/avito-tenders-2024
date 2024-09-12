@@ -26,8 +26,8 @@ func (r CreateBidRequest) ToEntity() entity.Bid {
 
 func (r CreateBidRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.Name, validation.Required, validation.Length(1, 100)),
-		validation.Field(&r.Description, validation.Required, validation.Length(1, 500)),
+		validation.Field(&r.Name, validation.Required, validation.Length(0, 100)),
+		validation.Field(&r.Description, validation.Required, validation.Length(0, 500)),
 		validation.Field(&r.TenderId, validation.Required, validation.Length(1, 100)),
 		validation.Field(&r.AuthorType, validation.Required, r.AuthorType.ValidationRule()),
 		validation.Field(&r.AuthorId, validation.Required, validation.Length(1, 100)),
