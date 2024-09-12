@@ -48,6 +48,17 @@ func Migrate(backend backend.Backend) {
 		log.Fatal("Migrate is nil")
 	}
 
+	_, _, err = m.Version()
+	if err != nil {
+		// Skip first migration
+		if errors.Is(err, migrate.ErrNilVersion) {
+			log.Printf("Migrate: no migration found. Set force version")
+			if err := m.Force(20240909203340); err != nil {
+				log.Fatalf("Migrate: could not force migration: %s", err)
+			}
+		}
+	}
+
 	err = m.Up()
 	defer m.Close()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
