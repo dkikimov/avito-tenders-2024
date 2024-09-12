@@ -34,7 +34,7 @@ func (r Repository) GetUserOrganization(ctx context.Context, userId string) (ent
 	var org entity.Organization
 	if err := row.StructScan(&org); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Organization{}, apperror.Unauthorized(apperror.ErrUnauthorized)
+			return entity.Organization{}, apperror.Forbidden(apperror.ErrForbidden)
 		}
 
 		slog.Error("couldn't scan organization found by user id", "error", err)

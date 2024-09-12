@@ -19,7 +19,7 @@ func (h *Handlers) MapBidsRoutes(r chi.Router, mw *middlewares.Manager) {
 		r.Get("/my", middlewares.Conveyor(h.GetMyBids, mw.UserExistsMiddleware, mw.PaginationMiddleware))
 		r.Get(fmt.Sprintf("/{%s}/status", bidIdPathParam), middlewares.Conveyor(h.GetBidStatus, mw.UserExistsMiddleware))
 		r.Put(fmt.Sprintf("/{%s}/status", bidIdPathParam), middlewares.Conveyor(h.UpdateBidStatus, mw.UserExistsMiddleware))
-
+		r.Get(fmt.Sprintf("/{%s}/list", tenderIdPathParam), middlewares.Conveyor(h.FindBidsByTender, mw.UserExistsMiddleware, mw.PaginationMiddleware))
 		r.Patch(fmt.Sprintf("/{%s}/edit", bidIdPathParam), middlewares.Conveyor(h.EditBid, mw.UserExistsMiddleware))
 	})
 }

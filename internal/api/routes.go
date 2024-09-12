@@ -54,10 +54,11 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 
 	tendersUC := tendersUsecase.NewUseCase(tendersRepository, organizationRepository)
 	bidsUC := bidsUsecase.NewUsecase(bidsUsecase.Opts{
-		Repo:      bidsRepository,
-		OrgRepo:   organizationRepository,
-		EmpRepo:   empRepository,
-		TrManager: trManager,
+		Repo:       bidsRepository,
+		OrgRepo:    organizationRepository,
+		EmpRepo:    empRepository,
+		TenderRepo: tendersRepository,
+		TrManager:  trManager,
 	})
 
 	mwManager := middlewares.NewManager(empRepository)

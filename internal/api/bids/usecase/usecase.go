@@ -93,38 +93,50 @@ func (u usecase) FindByUsername(ctx context.Context, username string, pagination
 }
 
 func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
-	// u.trManager.Do(ctx, func(ctx context.Context) error {
-	// 	bidsList, err := u.repo.FindByTenderId(ctx, models.FindByTenderId{
-	// 		TenderId:   req.TenderId,
-	// 		Pagination: req.Pagination,
-	// 	})
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	// If user is responsible for tender we need to return only `Published` bids
-	// 	tender, err := u.tendRepo.FindByUsername(ctx, req.TenderId)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	filteredBidsList := make([]dtos.BidResponse, 0, len(bidsList))
-	// 	for _, bid := range bidsList {
-	// 		if isResponsible && bid.Status == entity.BidPublished {
-	// 			filteredBidsList = append(filteredBidsList, dtos.NewBidResponse(bid))
-	// 			continue
-	// 		}
-	//
-	// 		if bid
-	// 	}
-	// })
-	panic("implement me")
-	// Check if user has enough rights.
+	var filteredBidsList []dtos.BidResponse
+
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		bidsList, err := u.repo.FindByTenderId(ctx, models.FindByTenderId{
+			TenderId:   req.TenderId,
+			Pagination: req.Pagination,
+		})
+		if err != nil {
+			return err
+		}
+
+		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		if err != nil {
+			return err
+		}
+
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		if err != nil {
+			return err
+		}
+
+		filteredBidsList = make([]dtos.BidResponse, 0, len(bidsList))
+		for _, bid := range bidsList {
+			// If user is responsible for tender we need to add `Published` bids
+			if isResponsible && bid.Status == entity.BidPublished {
+				filteredBidsList = append(filteredBidsList, dtos.NewBidResponse(bid))
+				continue
+			}
+
+			// If user created bid or bid was created by user from his company, then we need to add this bid.
+			// Status doesn't matter
+			has, _ := u.AuthorHasPermissions(ctx, bid, req.Username)
+			if has {
+				filteredBidsList = append(filteredBidsList, dtos.NewBidResponse(bid))
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return filteredBidsList, nil
 }
 
 func (u usecase) GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error) {
