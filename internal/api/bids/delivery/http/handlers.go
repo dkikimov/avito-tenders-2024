@@ -10,6 +10,7 @@ import (
 
 	"avito-tenders/internal/api/bids"
 	"avito-tenders/internal/api/bids/dtos"
+	"avito-tenders/internal/entity"
 	"avito-tenders/pkg/apperror"
 	"avito-tenders/pkg/fwcontext"
 )
@@ -80,11 +81,17 @@ func (h *Handlers) FindBidsByTender(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 	pagination := fwcontext.GetPagination(r.Context())
 
-	bidsList, err := h.uc.FindByTenderId(r.Context(), dtos.FindByTenderIdRequest{
+	req := dtos.FindByTenderIdRequest{
 		TenderId:   tenderId,
 		Username:   username,
 		Pagination: pagination,
-	})
+	}
+	if err := req.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	bidsList, err := h.uc.FindByTenderId(r.Context(), req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -115,6 +122,45 @@ func (h *Handlers) GetBidStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(dtos.BidStatusResponse{BidStatus: status}); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
+func (h *Handlers) UpdateBidStatus(w http.ResponseWriter, r *http.Request) {
+	username := fwcontext.GetUsername(r.Context())
+
+	bidId := chi.URLParam(r, bidIdPathParam)
+	if bidId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+		return
+	}
+
+	statusString := r.URL.Query().Get("status")
+	if statusString == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("status is not specified")))
+		return
+	}
+
+	req := dtos.UpdateStatusRequest{
+		BidId:    bidId,
+		Status:   entity.BidStatus(statusString),
+		Username: username,
+	}
+
+	if err := req.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	updatedBid, err := h.uc.UpdateStatusById(r.Context(), req)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(updatedBid); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }

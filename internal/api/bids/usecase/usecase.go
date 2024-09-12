@@ -93,7 +93,6 @@ func (u usecase) FindByUsername(ctx context.Context, username string, pagination
 }
 
 func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
-	// TODO implement me
 	panic("implement me")
 }
 
@@ -108,15 +107,35 @@ func (u usecase) GetStatusById(ctx context.Context, bidId string, username strin
 		return "", err
 	}
 	if !has {
-		return "", apperror.Unauthorized(apperror.ErrUnauthorized)
+		return "", apperror.Forbidden(apperror.ErrForbidden)
 	}
 
 	return bid.Status, nil
 }
 
 func (u usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error) {
-	// TODO implement me
-	panic("implement me")
+	bid, err := u.repo.FindByID(ctx, req.BidId)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	has, err := u.AuthorHasPermissions(ctx, bid, req.Username)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+	if !has {
+		return dtos.BidResponse{}, apperror.Forbidden(apperror.ErrForbidden)
+	}
+
+	newBid := bid
+	newBid.Status = req.Status
+
+	updatedBid, err := u.repo.Update(ctx, newBid)
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	return dtos.NewBidResponse(updatedBid), nil
 }
 
 func (u usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error) {
@@ -152,7 +171,7 @@ func (u usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 			return false, err
 		}
 		if !isResponsible {
-			return false, apperror.Unauthorized(apperror.ErrUnauthorized)
+			return false, apperror.Forbidden(apperror.ErrForbidden)
 		}
 	case entity.AuthorUser:
 		emp, err := u.empRepo.FindByUsername(ctx, username)
@@ -161,7 +180,7 @@ func (u usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 		}
 
 		if emp.Id != bid.AuthorId {
-			return false, apperror.Unauthorized(apperror.ErrUnauthorized)
+			return false, apperror.Forbidden(apperror.ErrForbidden)
 		}
 	default:
 		slog.Error("Unknown author type", "bid", bid)

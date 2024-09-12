@@ -12,6 +12,7 @@ var (
 	ErrUserEmpty                = errors.New("user is required")
 	ErrOrganizationDoesNotExist = errors.New("organization does not exist")
 	ErrUnauthorized             = errors.New("unauthorized")
+	ErrForbidden                = errors.New("don't have enough permissions")
 	ErrInternal                 = errors.New("internal error")
 	ErrNotFound                 = errors.New("not found")
 )

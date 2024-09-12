@@ -110,8 +110,45 @@ func (r Repository) FindByTenderId(ctx context.Context, req models.FindByTenderI
 }
 
 func (r Repository) Update(ctx context.Context, bid entity.Bid) (entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+	tr := r.getter.DefaultTrOrDB(ctx, r.db)
+
+	row := tr.QueryRowxContext(
+		ctx,
+		`
+		update bids set 
+		                name = $1,
+		                description = $2,
+		                status = $3,
+		                tender_id = $4,
+		                author_type = $5, 
+		                author_id = $6,
+		                version = version + 1
+		            where id = $7
+		returning id, name, description, status, tender_id, author_type, author_id, version, created_at
+`,
+		bid.Name,
+		bid.Description,
+		bid.Status,
+		bid.TenderId,
+		bid.AuthorType,
+		bid.AuthorId,
+		bid.Id,
+	)
+	if row.Err() != nil {
+		return entity.Bid{}, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	var updatedBid entity.Bid
+	if err := row.StructScan(&updatedBid); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Bid{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("couldn't scan updated bid", "error", err)
+		return entity.Bid{}, apperror.InternalServerError(err)
+	}
+
+	return updatedBid, nil
 }
 
 func (r Repository) FindByIDFromHistory(ctx context.Context, id string) (entity.Bid, error) {
