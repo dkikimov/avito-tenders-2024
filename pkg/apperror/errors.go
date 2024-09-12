@@ -9,6 +9,7 @@ import (
 var (
 	ErrInvalidInput             = errors.New("invalid input")
 	ErrUserDoesNotExist         = errors.New("user does not exist")
+	ErrUserEmpty                = errors.New("user is required")
 	ErrOrganizationDoesNotExist = errors.New("organization does not exist")
 	ErrUnauthorized             = errors.New("unauthorized")
 	ErrInternal                 = errors.New("internal error")

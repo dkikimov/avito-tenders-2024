@@ -15,6 +15,7 @@ import (
 	bidsRepo "avito-tenders/internal/api/bids/repository"
 	bidsUsecase "avito-tenders/internal/api/bids/usecase"
 	empRepo "avito-tenders/internal/api/employee/repository"
+	"avito-tenders/internal/api/middlewares"
 	orgRepo "avito-tenders/internal/api/organization/repository"
 	tendersHttp "avito-tenders/internal/api/tenders/delivery/http"
 	tendersRepo "avito-tenders/internal/api/tenders/repository"
@@ -59,12 +60,14 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 		TrManager: trManager,
 	})
 
+	mwManager := middlewares.NewManager(empRepository)
+
 	tenderHandlers := tendersHttp.NewHandlers(tendersUC)
 	bidsHandlers := bidsHttp.NewHandlers(bidsUC)
 
 	r.Route(groupAPI, func(r chi.Router) {
 		tenderHandlers.MapTendersRoutes(r)
-		bidsHandlers.MapBidsRoutes(r)
+		bidsHandlers.MapBidsRoutes(r, mwManager)
 		r.Get("/swagger/*", httpSwagger.WrapHandler)
 	})
 

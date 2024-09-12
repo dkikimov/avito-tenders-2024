@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
@@ -71,13 +73,40 @@ func (r Repository) FindByUsername(ctx context.Context, req models.FindByUsernam
 }
 
 func (r Repository) FindByID(ctx context.Context, id string) (entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx,
+		`select id, name, description, status, tender_id, author_type, author_id, version, created_at from bids
+				where id = $1`, id)
+	if row.Err() != nil {
+		return entity.Bid{}, apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	var foundBid entity.Bid
+	if err := row.StructScan(&foundBid); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return entity.Bid{}, apperror.NotFound(apperror.ErrNotFound)
+		}
+
+		slog.Error("couldn't scan found bid row", "error", err)
+		return entity.Bid{}, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return foundBid, nil
 }
 
 func (r Repository) FindByTenderId(ctx context.Context, req models.FindByTenderId) ([]entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+	var bidsList []entity.Bid
+
+	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
+		select id, name, description, status, tender_id, author_type, author_id, version, created_at from bids
+		where tender_id = $1
+		limit $2 offset $3
+`, req.TenderId, req.Limit, req.Offset)
+	if err != nil {
+		slog.Error("couldn't find bids by tender id", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return bidsList, nil
 }
 
 func (r Repository) Update(ctx context.Context, bid entity.Bid) (entity.Bid, error) {

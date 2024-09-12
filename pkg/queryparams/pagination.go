@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	defaultLimit  = 5
-	defaultOffset = 0
+	DefaultLimit  = 5
+	DefaultOffset = 0
 
 	minLimit = 0
 	maxLimit = 50
@@ -24,10 +24,10 @@ type Pagination struct {
 	Offset int `json:"offset"`
 }
 
-func ParsePagination(values url.Values) (Pagination, error) {
+func ParseQueryPagination(values url.Values) (Pagination, error) {
 	pagination := Pagination{
-		Limit:  defaultLimit,
-		Offset: defaultOffset,
+		Limit:  DefaultLimit,
+		Offset: DefaultOffset,
 	}
 
 	limit, offset := values.Get("limit"), values.Get("offset")

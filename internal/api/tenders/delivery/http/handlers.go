@@ -62,11 +62,11 @@ func (h *Handlers) GetMyTenders(w http.ResponseWriter, r *http.Request) {
 
 	username := values.Get("username")
 	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(errors.New("username is required")))
+		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
 		return
 	}
 
-	pagination, err := queryparams.ParsePagination(values)
+	pagination, err := queryparams.ParseQueryPagination(values)
 	if err != nil {
 		apperror.SendError(w, err)
 		slog.Error("couldn't parse pagination", "error", err)
@@ -90,7 +90,7 @@ func (h *Handlers) GetTenders(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 
 	// Parse pagination.
-	pagination, err := queryparams.ParsePagination(values)
+	pagination, err := queryparams.ParseQueryPagination(values)
 	if err != nil {
 		apperror.SendError(w, err)
 		slog.Error("couldn't parse pagination", "error", err)
@@ -193,7 +193,7 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 	urlQuery := r.URL.Query()
 	username := urlQuery.Get("username")
 	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserDoesNotExist))
+		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
 		return
 	}
 
@@ -247,7 +247,7 @@ func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
 	urlQuery := r.URL.Query()
 	username := urlQuery.Get("username")
 	if len(username) == 0 {
-		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserDoesNotExist))
+		apperror.SendError(w, apperror.Unauthorized(apperror.ErrUserEmpty))
 		return
 	}
 

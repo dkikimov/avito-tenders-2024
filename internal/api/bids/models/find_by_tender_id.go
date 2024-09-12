@@ -6,6 +6,5 @@ import (
 
 type FindByTenderId struct {
 	TenderId string
-	Username string
 	queryparams.Pagination
 }
