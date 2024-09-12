@@ -18,7 +18,7 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
-type usecase struct {
+type Usecase struct {
 	repo      bids.Repository
 	orgRepo   organization.Repository
 	empRepo   employee.Repository
@@ -34,8 +34,8 @@ type Opts struct {
 	TrManager  *trm.Manager
 }
 
-func NewUsecase(createOpts Opts) bids.Usecase {
-	return &usecase{
+func NewUsecase(createOpts Opts) *Usecase {
+	return &Usecase{
 		repo:      createOpts.Repo,
 		trManager: createOpts.TrManager,
 		orgRepo:   createOpts.OrgRepo,
@@ -44,7 +44,7 @@ func NewUsecase(createOpts Opts) bids.Usecase {
 	}
 }
 
-func (u usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.BidResponse, error) {
+func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.BidResponse, error) {
 	var result entity.Bid
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
 		// Check does author exist.
@@ -80,7 +80,7 @@ func (u usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 	return dtos.NewBidResponse(result), nil
 }
 
-func (u usecase) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.BidResponse, error) {
+func (u Usecase) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.BidResponse, error) {
 	bidsList, err := u.repo.FindByUsername(ctx, models.FindByUsername{
 		Username:   username,
 		Pagination: pagination,
@@ -92,7 +92,7 @@ func (u usecase) FindByUsername(ctx context.Context, username string, pagination
 	return dtos.NewBidResponseList(bidsList), nil
 }
 
-func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
+func (u Usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
 	var filteredBidsList []dtos.BidResponse
 
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
@@ -139,7 +139,7 @@ func (u usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequ
 	return filteredBidsList, nil
 }
 
-func (u usecase) GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error) {
+func (u Usecase) GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error) {
 	bid, err := u.repo.FindByID(ctx, bidId)
 	if err != nil {
 		return "", err
@@ -156,7 +156,7 @@ func (u usecase) GetStatusById(ctx context.Context, bidId string, username strin
 	return bid.Status, nil
 }
 
-func (u usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error) {
+func (u Usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error) {
 	bid, err := u.repo.FindByID(ctx, req.BidId)
 	if err != nil {
 		return dtos.BidResponse{}, err
@@ -181,7 +181,7 @@ func (u usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequ
 	return dtos.NewBidResponse(updatedBid), nil
 }
 
-func (u usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error) {
+func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error) {
 	var resultBid dtos.BidResponse
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
 		bid, err := u.repo.FindByID(ctx, req.BidId)
@@ -265,12 +265,12 @@ func (u usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequ
 	return resultBid, nil
 }
 
-func (u usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error) {
+func (u Usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (u usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error) {
+func (u Usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error) {
 	oldBid, err := u.repo.FindByIDFromHistory(ctx, req.BidId, req.Version)
 	if err != nil {
 		return dtos.BidResponse{}, err
@@ -292,12 +292,12 @@ func (u usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.B
 	return dtos.NewBidResponse(updatedBid), nil
 }
 
-func (u usecase) FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error) {
+func (u Usecase) FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (u usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, username string) (bool, error) {
+func (u Usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, username string) (bool, error) {
 	switch bid.AuthorType {
 	case entity.AuthorOrganization:
 		org, err := u.orgRepo.GetUserOrganization(ctx, bid.AuthorId)
@@ -329,7 +329,7 @@ func (u usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 	return true, nil
 }
 
-func (u usecase) Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error) {
+func (u Usecase) Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error) {
 	bid, err := u.repo.FindByID(ctx, req.BidId)
 	if err != nil {
 		return dtos.BidResponse{}, err

@@ -4,7 +4,7 @@ import "github.com/invopop/validation"
 
 type RollbackTenderRequest struct {
 	Username string `json:"username"`
-	Version  string `json:"version"`
+	Version  int    `json:"version"`
 }
 
 func (r RollbackTenderRequest) Validate() error {

@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	httpSwagger "github.com/swaggo/http-swagger"
 
 	bidsHttp "avito-tenders/internal/api/bids/delivery/http"
 	bidsRepo "avito-tenders/internal/api/bids/repository"
@@ -25,13 +24,6 @@ import (
 
 const groupAPI = "/api"
 
-// InitAPIRoutes initializes router for the webserver.
-// Swagger spec:
-// @schemes     https
-// @host        localhost:8080
-// @BasePath    /api
-// @title       Avito Tenders API
-// @version     1.0.
 func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -45,14 +37,18 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 		MaxAge:           300,
 	}))
 
-	tendersRepository := tendersRepo.NewRepository(b.DB)
+	tendersRepository := tendersRepo.NewRepository(b.DB, trmsqlx.DefaultCtxGetter)
 	organizationRepository := orgRepo.NewRepository(b.DB, trmsqlx.DefaultCtxGetter)
 	bidsRepository := bidsRepo.NewRepository(b.DB, trmsqlx.DefaultCtxGetter)
 	empRepository := empRepo.NewRepository(b.DB, trmsqlx.DefaultCtxGetter)
 
 	trManager := manager.Must(trmsqlx.NewDefaultFactory(b.DB), manager.WithCtxManager(trmcontext.DefaultManager))
 
-	tendersUC := tendersUsecase.NewUseCase(tendersRepository, organizationRepository)
+	tendersUC := tendersUsecase.NewUsecase(tendersUsecase.Opts{
+		Repo:      tendersRepository,
+		OrgRepo:   organizationRepository,
+		TrManager: trManager,
+	})
 	bidsUC := bidsUsecase.NewUsecase(bidsUsecase.Opts{
 		Repo:       bidsRepository,
 		OrgRepo:    organizationRepository,
@@ -69,7 +65,6 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 	r.Route(groupAPI, func(r chi.Router) {
 		tenderHandlers.MapTendersRoutes(r)
 		bidsHandlers.MapBidsRoutes(r, mwManager)
-		r.Get("/swagger/*", httpSwagger.WrapHandler)
 	})
 
 	slog.Info("API routes initialized")

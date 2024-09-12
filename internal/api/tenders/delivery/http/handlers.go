@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/go-chi/chi/v5"
@@ -251,9 +252,15 @@ func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	intVersion, err := strconv.Atoi(version)
+	if err != nil {
+		apperror.SendError(w, apperror.BadRequest(errors.New("version is not a number")))
+		return
+	}
+
 	request := dtos.RollbackTenderRequest{
 		Username: username,
-		Version:  version,
+		Version:  intVersion,
 	}
 	if err := request.Validate(); err != nil {
 		apperror.SendError(w, apperror.BadRequest(err))
