@@ -361,7 +361,7 @@ func (u Usecase) FindReviewsByTenderID(ctx context.Context, req dtos.FindReviews
 			return err
 		}
 
-		author, err := u.empRepo.FindByUsername(ctx, req.RequesterUsername)
+		author, err := u.empRepo.FindByUsername(ctx, req.AuthorUsername)
 		if err != nil {
 			return err
 		}
