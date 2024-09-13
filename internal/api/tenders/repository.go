@@ -16,6 +16,6 @@ type Repository interface {
 	Update(ctx context.Context, tender entity.Tender) (entity.Tender, error)
 	GetAll(ctx context.Context, filter TenderFilter, pagination queryparams.Pagination) ([]entity.Tender, error)
 	FindById(ctx context.Context, id string) (entity.Tender, error)
-	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error)
+	FindByOrganizationID(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error)
 	FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Tender, error)
 }

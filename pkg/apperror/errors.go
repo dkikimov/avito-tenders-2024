@@ -23,6 +23,10 @@ type AppError struct {
 	Message string
 }
 
+func (h AppError) Unwrap() error {
+	return h.Err
+}
+
 func Equals(err error, expectedErr error) bool {
 	return strings.EqualFold(err.Error(), expectedErr.Error())
 }

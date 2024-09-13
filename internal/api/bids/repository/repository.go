@@ -96,8 +96,9 @@ func (r Repository) FindByUsername(ctx context.Context, req models.FindByUsernam
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
 		select b.id, b.name, b.description, b.status, b.tender_id, b.author_type, b.author_id, b.version, b.created_at from bids b 
-		join employee e on e.id = b.author_id
-		where e.username = $1
+		join employee e on e.username = $1
+		join organization_responsible r on r.user_id = e.id 
+		where (b.author_id == 'Organization' and author_id = r.organization_id) or (b.author_id == 'User' and b.author_id = e.id)
 		limit $2 offset $3
 `, req.Username, req.Limit, req.Offset)
 	if err != nil {

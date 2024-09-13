@@ -40,7 +40,7 @@ func (r Repository) GetUserOrganization(ctx context.Context, userId string) (ent
 		                join organization o on o.id = r.organization_id
 		                where user_id = $1`, userId)
 	if row.Err() != nil {
-		return entity.Organization{}, apperror.Unauthorized(apperror.ErrUnauthorized)
+		return entity.Organization{}, apperror.Forbidden(apperror.ErrForbidden)
 	}
 
 	var org entity.Organization

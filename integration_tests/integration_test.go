@@ -19,6 +19,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"avito-tenders/config"
@@ -228,11 +230,11 @@ func (s *TestSuite) TestCreateTender() {
 			requestBody := s.loader.LoadString(fmt.Sprintf("%s/%s", fixturesPath, tt.args.inputFileName))
 
 			res, err := s.server.Client().Post(fmt.Sprintf("%s/api/tenders/new", s.server.URL), "", bytes.NewBufferString(requestBody))
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
 			defer res.Body.Close()
 
-			s.Require().Equal(tt.want.StatusCode, res.StatusCode)
+			require.Equal(t, tt.want.StatusCode, res.StatusCode)
 			if tt.want.StatusCode != 200 {
 				return
 			}
@@ -240,7 +242,7 @@ func (s *TestSuite) TestCreateTender() {
 			// check response
 			var response dtos.TenderResponse
 			err = json.NewDecoder(res.Body).Decode(&response)
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
 			expected := s.loader.LoadTemplate(fmt.Sprintf("%s/%s.result", fixturesPath, tt.args.inputFileName), map[string]interface{}{
 				"id":        response.Id,
@@ -271,6 +273,16 @@ func (s *TestSuite) TestGetMyTenders() {
 			name: "Get my tenders",
 			args: args{
 				username: "user1",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        2,
+			},
+		},
+		{
+			name: "Get my tenders from organization's employee account",
+			args: args{
+				username: "user2",
 			},
 			want: want{
 				StatusCode: 200,
@@ -344,11 +356,11 @@ func (s *TestSuite) TestGetMyTenders() {
 			}
 
 			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
 			defer res.Body.Close()
 
-			s.Require().Equal(tt.want.StatusCode, res.StatusCode)
+			require.Equal(t, tt.want.StatusCode, res.StatusCode)
 			if tt.want.StatusCode != 200 {
 				return
 			}
@@ -356,9 +368,9 @@ func (s *TestSuite) TestGetMyTenders() {
 			// check response
 			var response []dtos.TenderResponse
 			err = json.NewDecoder(res.Body).Decode(&response)
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
-			s.Assert().Equal(tt.want.Len, len(response))
+			assert.Equal(t, tt.want.Len, len(response))
 		})
 	}
 }
@@ -379,6 +391,156 @@ func (s *TestSuite) TestGetTenderStatusByID() {
 	}{
 		{
 			name: "Get published tender from creator account",
+			args: args{
+				username:       "user4",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+				outputFileName: "tenders/status/tender2.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get published tender from not creator account",
+			args: args{
+				username:       "user1",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+				outputFileName: "tenders/status/tender2.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get created tender from creator account",
+			args: args{
+				username:       "user4",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+				outputFileName: "tenders/status/tender1.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get created tender from organization's employee account",
+			args: args{
+				username:       "user5",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+				outputFileName: "tenders/status/tender1.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get created tender from not creator account",
+			args: args{
+				username: "user1",
+				tenderId: "550e8400-e29b-41d4-a716-446655440040",
+			},
+			want: want{
+				StatusCode: 403,
+			},
+		},
+		{
+			name: "Get closed tender from creator account",
+			args: args{
+				username:       "user4",
+				outputFileName: "tenders/status/tender3.json.result",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get closed tender from organization's employee",
+			args: args{
+				username:       "user5",
+				outputFileName: "tenders/status/tender3.json.result",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get closed tender from not creator account",
+			args: args{
+				username: "user1",
+				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 403,
+			},
+		},
+		{
+			name: "Get closed tender with invalid user account",
+			args: args{
+				username: "user40",
+				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 401,
+			},
+		},
+		{
+			name: "Get unknown tender",
+			args: args{
+				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+			},
+			want: want{
+				StatusCode: 404,
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderId)
+
+			v := url.Values{}
+			if len(tt.args.username) != 0 {
+				v.Add("username", tt.args.username)
+			}
+			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
+
+			require.NoError(t, err)
+
+			defer res.Body.Close()
+
+			require.Equal(t, tt.want.StatusCode, res.StatusCode)
+			if tt.want.StatusCode != 200 {
+				return
+			}
+
+			expected := s.loader.LoadString(fmt.Sprintf("%s/%s", fixturesPath, tt.args.outputFileName))
+
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+
+			assert.Equal(t, expected, string(body))
+		})
+	}
+}
+
+func (s *TestSuite) TestEditTenderStatusByID() {
+	type want struct {
+		StatusCode int
+	}
+	type args struct {
+		username       string
+		tenderId       string
+		outputFileName string
+		newStatus      string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Update status from creator account",
 			args: args{
 				username:       "user4",
 				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
@@ -471,11 +633,11 @@ func (s *TestSuite) TestGetTenderStatusByID() {
 			}
 
 			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
 			defer res.Body.Close()
 
-			s.Require().Equal(tt.want.StatusCode, res.StatusCode)
+			require.Equal(t, tt.want.StatusCode, res.StatusCode)
 			if tt.want.StatusCode != 200 {
 				return
 			}
@@ -483,9 +645,9 @@ func (s *TestSuite) TestGetTenderStatusByID() {
 			expected := s.loader.LoadString(fmt.Sprintf("%s/%s", fixturesPath, tt.args.outputFileName))
 
 			body, err := io.ReadAll(res.Body)
-			s.Require().NoError(err)
+			require.NoError(t, err)
 
-			s.Assert().Equal(expected, string(body))
+			assert.Equal(t, expected, string(body))
 		})
 	}
 }

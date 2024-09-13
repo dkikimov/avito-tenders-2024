@@ -143,7 +143,31 @@ func (u *Usecase) GetTenderStatus(ctx context.Context, id string, request dtos.T
 }
 
 func (u *Usecase) FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.TenderResponse, error) {
-	tendersList, err := u.repo.FindByUsername(ctx, username, pagination)
+	var tendersList []entity.Tender
+
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		user, err := u.empRepo.FindByUsername(ctx, username)
+		if err != nil {
+			return err
+		}
+
+		org, err := u.orgRepo.GetUserOrganization(ctx, user.Id)
+		if err != nil {
+			if errors.Is(err, apperror.ErrForbidden) {
+				tendersList = make([]entity.Tender, 0)
+				return nil
+			}
+
+			return err
+		}
+
+		tendersList, err = u.repo.FindByOrganizationID(ctx, org.Id, pagination)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
