@@ -99,6 +99,7 @@ func (r Repository) FindByUsername(ctx context.Context, req models.FindByUsernam
 		join employee e on e.username = $1
 		join organization_responsible r on r.user_id = e.id 
 		where (b.author_id == 'Organization' and author_id = r.organization_id) or (b.author_id == 'User' and b.author_id = e.id)
+		order by name
 		limit $2 offset $3
 `, req.Username, req.Limit, req.Offset)
 	if err != nil {
@@ -136,6 +137,7 @@ func (r Repository) FindByTenderId(ctx context.Context, req models.FindByTenderI
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
 		select id, name, description, status, tender_id, author_type, author_id, version, created_at from bids
 		where tender_id = $1
+		order by name
 		limit $2 offset $3
 `, req.TenderId, req.Limit, req.Offset)
 	if err != nil {

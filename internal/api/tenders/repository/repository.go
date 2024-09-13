@@ -120,6 +120,7 @@ func (r Repository) FindByOrganizationID(ctx context.Context, organizationID str
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where organization_id = $1
+		order by name
 		limit $2
 		offset $3`,
 		organizationID,
@@ -161,7 +162,7 @@ func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 
 	query := strings.Builder{}
 	query.WriteString(`select id, name, description, service_type, status, organization_id, version, created_at from tenders 
-    					where status = 'Published' `)
+    					  where status = 'Published' `)
 
 	if len(filter.ServiceTypes) > 0 {
 		query.WriteString("and service_type IN (")
@@ -176,7 +177,7 @@ func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 		query.WriteString(") ")
 	}
 
-	query.WriteString(fmt.Sprintf("limit $%d offset $%d", len(filterValues)+1, len(filterValues)+2))
+	query.WriteString(fmt.Sprintf("order by name limit $%d offset $%d", len(filterValues)+1, len(filterValues)+2))
 	filterValues = append(filterValues, pagination.Limit, pagination.Offset)
 
 	var tenderList = make([]entity.Tender, 0)
