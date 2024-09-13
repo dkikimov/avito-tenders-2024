@@ -65,7 +65,7 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 	bidsHandlers := bidsHttp.NewHandlers(bidsUC)
 
 	r.Route(groupAPI, func(r chi.Router) {
-		tenderHandlers.MapTendersRoutes(r, nil)
+		tenderHandlers.MapTendersRoutes(r, mwManager)
 		bidsHandlers.MapBidsRoutes(r, mwManager)
 	})
 

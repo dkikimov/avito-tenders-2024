@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -149,6 +150,15 @@ func (s *TestSuite) TestCreateTender() {
 			},
 		},
 		{
+			name: "Create published delivery tender",
+			args: args{
+				inputFileName: "tenders/new/create_tender_published.json",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
 			name: "Missing name",
 			args: args{
 				inputFileName: "tenders/new/missing_name.json",
@@ -241,40 +251,113 @@ func (s *TestSuite) TestCreateTender() {
 	}
 }
 
-// func (s *TestSuite) TestGetUser() {
-// 	res, err := s.server.Client().Get(s.server.URL + "/users/1")
-// 	s.Require().NoError(err)
-//
-// 	defer res.Body.Close()
-//
-// 	s.Require().Equal(http.StatusOK, res.StatusCode)
-//
-// 	// check response
-// 	expected := s.loader.LoadString("fixtures/api/get_user_response.json")
-//
-// 	JSONEq(s.T(), expected, res.Body)
-// }
-//
-// func (s *TestSuite) TestDepositBalance() {
-// 	// mock http call
-// 	httpmock.RegisterResponder(
-// 		http.MethodPost,
-// 		addr+"/deposit",
-// 		httpmock.NewStringResponder(http.StatusOK, ""),
-// 	)
-// 	//
-//
-// 	requestBody := s.loader.LoadString("fixtures/api/deposit_user_request.json")
-//
-// 	res, err := s.server.Client().Post(s.server.URL+"/users/deposit", "", bytes.NewBufferString(requestBody))
-// 	s.Require().NoError(err)
-//
-// 	defer res.Body.Close()
-//
-// 	s.Require().Equal(http.StatusOK, res.StatusCode)
-//
-// 	// check response
-// 	expected := s.loader.LoadString("fixtures/api/deposit_user_response.json")
-//
-// 	JSONEq(s.T(), expected, res.Body)
-// }
+func (s *TestSuite) TestGetMyTenders() {
+	type want struct {
+		StatusCode int
+		Len        int
+	}
+	type args struct {
+		username string
+		limit    string
+		offset   string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Get my tenders",
+			args: args{
+				username: "user1",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        2,
+			},
+		},
+		{
+			name: "Get my tenders limit",
+			args: args{
+				username: "user1",
+				limit:    "1",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        1,
+			},
+		},
+		{
+			name: "Get my tenders offset",
+			args: args{
+				username: "user1",
+				offset:   "1",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        1,
+			},
+		},
+		{
+			name: "Get my tenders limit and offset",
+			args: args{
+				username: "user1",
+				offset:   "2",
+				limit:    "5",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        0,
+			},
+		},
+		{
+			name: "Get my tenders for user that didn't create them",
+			args: args{
+				username: "user30",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        0,
+			},
+		},
+		{
+			name: "Unknown user",
+			args: args{
+				username: "user40",
+			},
+			want: want{
+				StatusCode: 401,
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			baseUrl := fmt.Sprintf("%s/api/tenders/my", s.server.URL)
+			v := url.Values{}
+			v.Add("username", tt.args.username)
+			if len(tt.args.limit) != 0 {
+				v.Add("limit", tt.args.limit)
+			}
+			if len(tt.args.offset) != 0 {
+				v.Add("offset", tt.args.offset)
+			}
+
+			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
+			s.Require().NoError(err)
+
+			defer res.Body.Close()
+
+			s.Require().Equal(tt.want.StatusCode, res.StatusCode)
+			if tt.want.StatusCode != 200 {
+				return
+			}
+
+			// check response
+			var response []dtos.TenderResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			s.Require().NoError(err)
+
+			s.Assert().Equal(tt.want.Len, len(response))
+		})
+	}
+}

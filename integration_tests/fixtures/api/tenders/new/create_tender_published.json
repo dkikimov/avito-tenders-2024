@@ -1,0 +1,8 @@
+{
+  "name": "Тендер Published",
+  "description": "Описание тендера",
+  "serviceType": "Delivery",
+  "status": "Published",
+  "organizationId": "550e8400-e29b-41d4-a716-446655440020",
+  "creatorUsername": "user1"
+}
