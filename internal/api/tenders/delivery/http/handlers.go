@@ -110,8 +110,8 @@ func (h *Handlers) GetTenders(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
 		return
 	}
@@ -120,7 +120,7 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 		Username: r.URL.Query().Get("username"),
 	}
 
-	tender, err := h.uc.GetTenderStatus(r.Context(), tenderId, request)
+	tender, err := h.uc.GetTenderStatus(r.Context(), tenderID, request)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -135,8 +135,8 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
 		return
 	}
@@ -153,7 +153,7 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.EditStatus(r.Context(), tenderId, req)
+	tender, err := h.uc.EditStatus(r.Context(), tenderID, req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -167,8 +167,8 @@ func (h *Handlers) UpdateTenderStatus(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
 		return
 	}
@@ -202,7 +202,7 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.Edit(r.Context(), tenderId, req)
+	tender, err := h.uc.Edit(r.Context(), tenderID, req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -216,8 +216,8 @@ func (h *Handlers) UpdateTender(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
 		return
 	}
@@ -245,7 +245,7 @@ func (h *Handlers) RollbackTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.Rollback(r.Context(), tenderId, request)
+	tender, err := h.uc.Rollback(r.Context(), tenderID, request)
 	if err != nil {
 		apperror.SendError(w, err)
 		return

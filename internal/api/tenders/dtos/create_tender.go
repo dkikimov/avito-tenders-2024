@@ -11,7 +11,7 @@ type CreateTenderRequest struct {
 	Description     string              `json:"description"`
 	ServiceType     entity.ServiceType  `json:"serviceType"`
 	Status          entity.TenderStatus `json:"status"`
-	OrganizationId  string              `json:"organizationId"`
+	OrganizationID  string              `json:"organizationId"`
 	CreatorUsername string              `json:"creatorUsername"`
 }
 
@@ -21,7 +21,7 @@ func (c CreateTenderRequest) ToEntity() entity.Tender {
 		Description:     c.Description,
 		ServiceType:     c.ServiceType,
 		Status:          c.Status,
-		OrganizationId:  c.OrganizationId,
+		OrganizationID:  c.OrganizationID,
 		CreatorUsername: c.CreatorUsername,
 	}
 }
@@ -32,7 +32,7 @@ func (c CreateTenderRequest) Validate() error {
 		validation.Field(&c.Description, validation.Required),
 		validation.Field(&c.ServiceType, validation.Required, c.ServiceType.ValidationRule()),
 		validation.Field(&c.Status, validation.Required, c.Status.ValidationRule()),
-		validation.Field(&c.OrganizationId, validation.Required),
+		validation.Field(&c.OrganizationID, validation.Required),
 		validation.Field(&c.CreatorUsername, validation.Required),
 	)
 }

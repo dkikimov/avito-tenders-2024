@@ -4,7 +4,7 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
-type FindByTenderId struct {
-	TenderId string
+type FindByTenderID struct {
+	TenderID string
 	queryparams.Pagination
 }

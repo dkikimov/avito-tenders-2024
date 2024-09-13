@@ -6,10 +6,9 @@ import (
 	"errors"
 	"log/slog"
 
+	trmsqlx "github.com/avito-tech/go-transaction-manager/drivers/sqlx/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-
-	trmsqlx "github.com/avito-tech/go-transaction-manager/drivers/sqlx/v2"
 
 	"avito-tenders/internal/api/bids/models"
 	"avito-tenders/internal/entity"
@@ -21,9 +20,9 @@ type Repository struct {
 	getter *trmsqlx.CtxGetter
 }
 
-func (r Repository) GetBidApproveAmount(ctx context.Context, bidId string) (int, error) {
+func (r Repository) GetBidApproveAmount(ctx context.Context, bidID string) (int, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx,
-		`select count(bid_id) from bids_approvals where bid_id = $1`, bidId)
+		`select count(bid_id) from bids_approvals where bid_id = $1`, bidID)
 	if err := row.Err(); err != nil {
 		return 0, apperror.BadRequest(apperror.ErrInvalidInput)
 	}
@@ -40,20 +39,11 @@ func NewRepository(db *sqlx.DB, c *trmsqlx.CtxGetter) *Repository {
 	return &Repository{db: db, getter: c}
 }
 
-func (r Repository) SubmitApproveDecision(ctx context.Context, bidId string, userId string) error {
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		slog.Error("couldn't start transaction", "error", err)
-		return apperror.InternalServerError(apperror.ErrInternal)
-	}
-	defer tx.Rollback()
-
-	tr := r.getter.DefaultTrOrDB(ctx, tx)
-
-	_, err = tr.ExecContext(ctx,
+func (r Repository) SubmitApproveDecision(ctx context.Context, bidID string, userID string) error {
+	_, err := r.getter.DefaultTrOrDB(ctx, r.db).ExecContext(ctx,
 		`insert into bids_approvals (bid_id, user_id)
 				values ($1, $2) 
-				on conflict do nothing`, bidId, userId)
+				on conflict do nothing`, bidID, userID)
 	if err != nil {
 		return apperror.BadRequest(apperror.ErrInvalidInput)
 	}
@@ -74,9 +64,9 @@ func (r Repository) Create(ctx context.Context, bid entity.Bid) (entity.Bid, err
 		bid.Name,
 		bid.Description,
 		entity.BidCreated,
-		bid.TenderId,
+		bid.TenderID,
 		bid.AuthorType,
-		bid.AuthorId,
+		bid.AuthorID,
 	)
 
 	if row.Err() != nil {
@@ -125,13 +115,14 @@ func (r Repository) FindByID(ctx context.Context, id string) (entity.Bid, error)
 		}
 
 		slog.Error("couldn't scan found bid row", "error", err)
+
 		return entity.Bid{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return foundBid, nil
 }
 
-func (r Repository) FindByTenderId(ctx context.Context, req models.FindByTenderId) ([]entity.Bid, error) {
+func (r Repository) FindByTenderID(ctx context.Context, req models.FindByTenderID) ([]entity.Bid, error) {
 	var bidsList []entity.Bid
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
@@ -139,7 +130,7 @@ func (r Repository) FindByTenderId(ctx context.Context, req models.FindByTenderI
 		where tender_id = $1
 		order by name
 		limit $2 offset $3
-`, req.TenderId, req.Limit, req.Offset)
+`, req.TenderID, req.Limit, req.Offset)
 	if err != nil {
 		slog.Error("couldn't find bids by tender id", "error", err)
 		return nil, apperror.InternalServerError(apperror.ErrInternal)
@@ -168,10 +159,10 @@ func (r Repository) Update(ctx context.Context, bid entity.Bid) (entity.Bid, err
 		bid.Name,
 		bid.Description,
 		bid.Status,
-		bid.TenderId,
+		bid.TenderID,
 		bid.AuthorType,
-		bid.AuthorId,
-		bid.Id,
+		bid.AuthorID,
+		bid.ID,
 	)
 	if row.Err() != nil {
 		return entity.Bid{}, apperror.BadRequest(apperror.ErrInvalidInput)
@@ -184,6 +175,7 @@ func (r Repository) Update(ctx context.Context, bid entity.Bid) (entity.Bid, err
 		}
 
 		slog.Error("couldn't scan updated bid", "error", err)
+
 		return entity.Bid{}, apperror.InternalServerError(err)
 	}
 
@@ -206,6 +198,7 @@ select bid_id as id, name, description, status, tender_id, author_type, author_i
 		}
 
 		slog.Error("couldn't scan found bid row from history", "error", err)
+
 		return entity.Bid{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
@@ -215,7 +208,7 @@ select bid_id as id, name, description, status, tender_id, author_type, author_i
 func (r Repository) SendFeedback(ctx context.Context, req models.SendFeedback) error {
 	_, err := r.getter.DefaultTrOrDB(ctx, r.db).ExecContext(ctx, `
 		insert into bids_reviews(description, bid_id) VALUES ($1, $2)
-`, req.Feedback, req.BidId)
+`, req.Feedback, req.BidID)
 	if err != nil {
 		return apperror.BadRequest(apperror.ErrInvalidInput)
 	}
@@ -228,7 +221,7 @@ func (r Repository) FindReviews(ctx context.Context, req models.FindReview) ([]e
 
 	ids := make([]string, 0, len(req.Bids))
 	for _, bid := range req.Bids {
-		ids = append(ids, bid.Id)
+		ids = append(ids, bid.ID)
 	}
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &reviewsList, `
@@ -243,13 +236,13 @@ func (r Repository) FindReviews(ctx context.Context, req models.FindReview) ([]e
 	return reviewsList, nil
 }
 
-func (r Repository) FindBidsByOrganization(ctx context.Context, organizationId string) ([]entity.Bid, error) {
+func (r Repository) FindBidsByOrganization(ctx context.Context, organizationID string) ([]entity.Bid, error) {
 	var bidsList []entity.Bid
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
 			select b.id, b.name, b.description, b.status, b.tender_id, b.author_type, b.author_id, b.version, b.created_at from bids b
 			join tenders t on t.organization_id = $1
-			where tender_id = t.id`, organizationId)
+			where tender_id = t.id`, organizationID)
 	if err != nil {
 		slog.Error("couldn't find bid list by organization id", "error", err)
 		return nil, apperror.InternalServerError(apperror.ErrInternal)

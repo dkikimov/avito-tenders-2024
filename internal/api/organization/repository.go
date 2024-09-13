@@ -11,11 +11,11 @@ type Repository interface {
 	IsOrganizationResponsible(ctx context.Context, organizationID string, username string) (bool, error)
 
 	// GetUserOrganization returns user's organization.
-	GetUserOrganization(ctx context.Context, userId string) (entity.Organization, error)
+	GetUserOrganization(ctx context.Context, userID string) (entity.Organization, error)
 
 	// GetOrganizationResponsible returns slice of responsible ids.
 	GetOrganizationResponsible(ctx context.Context, organizationID string) ([]string, error)
 
-	// FindById returns organization found by organization id.
-	FindById(ctx context.Context, organizationID string) (entity.Organization, error)
+	// FindByID returns organization found by organization id.
+	FindByID(ctx context.Context, organizationID string) (entity.Organization, error)
 }

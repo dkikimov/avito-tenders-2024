@@ -7,14 +7,14 @@ import (
 )
 
 type UpdateStatusRequest struct {
-	BidId    string           `json:"bidId"`
+	BidID    string           `json:"bidId"`
 	Status   entity.BidStatus `json:"status"`
 	Username string           `json:"username"`
 }
 
 func (r UpdateStatusRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.BidId, validation.Required, validation.Length(1, 100)),
+		validation.Field(&r.BidID, validation.Required, validation.Length(1, 100)),
 		validation.Field(&r.Status, validation.Required, r.Status.ValidationRule()),
 		validation.Field(&r.Username, validation.Required))
 }

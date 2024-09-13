@@ -34,11 +34,11 @@ func (r Repository) GetOrganizationResponsible(ctx context.Context, organization
 	return responsibleList, nil
 }
 
-func (r Repository) GetUserOrganization(ctx context.Context, userId string) (entity.Organization, error) {
+func (r Repository) GetUserOrganization(ctx context.Context, userID string) (entity.Organization, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 		select o.id, o.name, o.description, o.type, o.created_at, o.updated_at from organization_responsible r
 		                join organization o on o.id = r.organization_id
-		                where user_id = $1`, userId)
+		                where user_id = $1`, userID)
 	if row.Err() != nil {
 		return entity.Organization{}, apperror.Forbidden(apperror.ErrForbidden)
 	}
@@ -50,6 +50,7 @@ func (r Repository) GetUserOrganization(ctx context.Context, userId string) (ent
 		}
 
 		slog.Error("couldn't scan organization found by user id", "error", err)
+
 		return entity.Organization{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
@@ -75,13 +76,14 @@ func (r Repository) IsOrganizationResponsible(ctx context.Context, organizationI
 		}
 
 		slog.Error("couldn't scan organization responsible", "error", err)
+
 		return false, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
 	return true, nil
 }
 
-func (r Repository) FindById(ctx context.Context, organizationID string) (entity.Organization, error) {
+func (r Repository) FindByID(ctx context.Context, organizationID string) (entity.Organization, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 		select id, name, description, type, created_at, updated_at from organization
 		where id = $1`, organizationID)
@@ -96,6 +98,7 @@ func (r Repository) FindById(ctx context.Context, organizationID string) (entity
 		}
 
 		slog.Error("couldn't scan organization found by id", "error", err)
+
 		return entity.Organization{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 

@@ -50,12 +50,12 @@ const (
 
 // Tender is the entity that represents tender.
 type Tender struct {
-	Id              string       `json:"id" db:"id"`
+	ID              string       `json:"id" db:"id"`
 	Name            string       `json:"name" db:"name"`
 	Description     string       `json:"description" db:"description"`
 	ServiceType     ServiceType  `json:"serviceType" db:"service_type"`
 	Status          TenderStatus `json:"status" db:"status"`
-	OrganizationId  string       `json:"organizationId" db:"organization_id"`
+	OrganizationID  string       `json:"organizationId" db:"organization_id"`
 	CreatorUsername string       `json:"creatorUsername" db:"creator_username"`
 	CreatedAt       time.Time    `json:"createdAt" db:"created_at"`
 	Version         int          `json:"version" db:"version"`

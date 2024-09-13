@@ -1,4 +1,4 @@
-package integration_tests
+package tests
 
 import (
 	"bytes"
@@ -154,7 +154,7 @@ func (s *TestSuite) TestCreateBid() {
 			require.NoError(t, err)
 
 			expected := s.loader.LoadTemplate(fmt.Sprintf("%s/%s.result", fixturesPath, tt.args.inputFileName), map[string]interface{}{
-				"id":        response.Id,
+				"id":        response.ID,
 				"createdAt": response.CreatedAt,
 			})
 
@@ -254,7 +254,7 @@ func (s *TestSuite) TestGetMyBids() {
 	}
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			baseUrl := fmt.Sprintf("%s/api/bids/my", s.server.URL)
+			baseURL := fmt.Sprintf("%s/api/bids/my", s.server.URL)
 			v := url.Values{}
 			v.Add("username", tt.args.username)
 			if len(tt.args.limit) != 0 {
@@ -264,7 +264,7 @@ func (s *TestSuite) TestGetMyBids() {
 				v.Add("offset", tt.args.offset)
 			}
 
-			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
+			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseURL, v.Encode()))
 			require.NoError(t, err)
 
 			defer res.Body.Close()
@@ -286,7 +286,6 @@ func (s *TestSuite) TestGetMyBids() {
 			} else {
 				assert.Equal(t, tt.want.Len, len(response))
 			}
-
 		})
 	}
 }
@@ -418,7 +417,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 	}
 // 	type args struct {
 // 		username       string
-// 		tenderId       string
+// 		tenderID       string
 // 		outputFileName string
 // 	}
 // 	tests := []struct {
@@ -430,7 +429,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get published tender from creator account",
 // 			args: args{
 // 				username:       "user4",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440041",
 // 				outputFileName: "tenders/status/tender2.json.result",
 // 			},
 // 			want: want{
@@ -441,7 +440,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get published tender from not creator account",
 // 			args: args{
 // 				username:       "user1",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440041",
 // 				outputFileName: "tenders/status/tender2.json.result",
 // 			},
 // 			want: want{
@@ -452,7 +451,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get created tender from creator account",
 // 			args: args{
 // 				username:       "user4",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440040",
 // 				outputFileName: "tenders/status/tender1.json.result",
 // 			},
 // 			want: want{
@@ -463,7 +462,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get created tender from organization's employee account",
 // 			args: args{
 // 				username:       "user5",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440040",
 // 				outputFileName: "tenders/status/tender1.json.result",
 // 			},
 // 			want: want{
@@ -474,7 +473,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get created tender from not creator account",
 // 			args: args{
 // 				username: "user1",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440040",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440040",
 // 			},
 // 			want: want{
 // 				StatusCode: 403,
@@ -485,7 +484,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			args: args{
 // 				username:       "user4",
 // 				outputFileName: "tenders/status/tender3.json.result",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 200,
@@ -496,7 +495,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			args: args{
 // 				username:       "user5",
 // 				outputFileName: "tenders/status/tender3.json.result",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 200,
@@ -506,7 +505,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get closed tender from not creator account",
 // 			args: args{
 // 				username: "user1",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 403,
@@ -516,7 +515,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get closed tender with invalid user account",
 // 			args: args{
 // 				username: "user40",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 401,
@@ -525,7 +524,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 		{
 // 			name: "Get unknown tender",
 // 			args: args{
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440043",
 // 			},
 // 			want: want{
 // 				StatusCode: 404,
@@ -534,7 +533,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 	}
 // 	for _, tt := range tests {
 // 		s.T().Run(tt.name, func(t *testing.T) {
-// 			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderId)
+// 			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderID)
 //
 // 			v := url.Values{}
 // 			if len(tt.args.username) != 0 {
@@ -567,7 +566,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 	}
 // 	type args struct {
 // 		username       string
-// 		tenderId       string
+// 		tenderID       string
 // 		outputFileName string
 // 		newStatus      string
 // 	}
@@ -580,7 +579,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Update status from creator account",
 // 			args: args{
 // 				username:       "user4",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440041",
 // 				outputFileName: "tenders/status/tender2.json.result",
 // 			},
 // 			want: want{
@@ -591,7 +590,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get published tender from not creator account",
 // 			args: args{
 // 				username:       "user1",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440041",
 // 				outputFileName: "tenders/status/tender2.json.result",
 // 			},
 // 			want: want{
@@ -602,7 +601,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get created tender from creator account",
 // 			args: args{
 // 				username:       "user4",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440040",
 // 				outputFileName: "tenders/status/tender1.json.result",
 // 			},
 // 			want: want{
@@ -613,7 +612,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get created tender from not creator account",
 // 			args: args{
 // 				username: "user1",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440040",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440040",
 // 			},
 // 			want: want{
 // 				StatusCode: 403,
@@ -624,7 +623,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			args: args{
 // 				username:       "user4",
 // 				outputFileName: "tenders/status/tender3.json.result",
-// 				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID:       "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 200,
@@ -634,7 +633,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get closed tender from not creator account",
 // 			args: args{
 // 				username: "user1",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 403,
@@ -644,7 +643,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 			name: "Get closed tender with invalid user account",
 // 			args: args{
 // 				username: "user40",
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440042",
 // 			},
 // 			want: want{
 // 				StatusCode: 401,
@@ -653,7 +652,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 		{
 // 			name: "Get unknown tender",
 // 			args: args{
-// 				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+// 				tenderID: "550e8400-e29b-41d4-a716-446655440043",
 // 			},
 // 			want: want{
 // 				StatusCode: 404,
@@ -662,7 +661,7 @@ func (s *TestSuite) TestGetMyBids() {
 // 	}
 // 	for _, tt := range tests {
 // 		s.T().Run(tt.name, func(t *testing.T) {
-// 			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderId)
+// 			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderID)
 //
 // 			v := url.Values{}
 // 			if len(tt.args.username) != 0 {

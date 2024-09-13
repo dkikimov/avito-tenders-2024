@@ -6,24 +6,24 @@ import (
 )
 
 type TenderResponse struct {
-	Id             string              `json:"id" db:"id"`
+	ID             string              `json:"id" db:"id"`
 	Name           string              `json:"name" db:"name"`
 	Description    string              `json:"description" db:"description"`
 	ServiceType    entity.ServiceType  `json:"serviceType" db:"service_type"`
 	Status         entity.TenderStatus `json:"status" db:"status"`
-	OrganizationId string              `json:"organizationId" db:"organization_id"`
+	OrganizationID string              `json:"organizationId" db:"organization_id"`
 	Version        int                 `json:"version" db:"version"`
 	CreatedAt      types.RFC3339Time   `json:"createdAt" db:"created_at"`
 }
 
 func NewTenderResponse(tender entity.Tender) TenderResponse {
 	return TenderResponse{
-		Id:             tender.Id,
+		ID:             tender.ID,
 		Name:           tender.Name,
 		Description:    tender.Description,
 		ServiceType:    tender.ServiceType,
 		Status:         tender.Status,
-		OrganizationId: tender.OrganizationId,
+		OrganizationID: tender.OrganizationID,
 		Version:        tender.Version,
 		CreatedAt:      types.RFCFromTime(tender.CreatedAt),
 	}

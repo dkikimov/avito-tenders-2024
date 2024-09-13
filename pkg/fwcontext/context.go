@@ -6,8 +6,10 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
+type CtxKey int
+
 const (
-	UsernameCtxKey int = iota
+	UsernameCtxKey CtxKey = iota
 	PaginationCtxKey
 )
 

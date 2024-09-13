@@ -48,7 +48,7 @@ func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 	var result entity.Bid
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
 		// Check does user exist.
-		_, err := u.empRepo.FindById(ctx, req.AuthorId)
+		_, err := u.empRepo.FindByID(ctx, req.AuthorID)
 		if err != nil {
 			return err
 		}
@@ -56,7 +56,7 @@ func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 		// Check does author exist.
 		switch req.AuthorType {
 		case entity.AuthorOrganization:
-			_, err := u.orgRepo.GetUserOrganization(ctx, req.AuthorId)
+			_, err := u.orgRepo.GetUserOrganization(ctx, req.AuthorID)
 			if err != nil {
 				if errors.Is(err, apperror.ErrNotFound) {
 					return apperror.Forbidden(apperror.ErrForbidden)
@@ -72,7 +72,7 @@ func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 		}
 
 		// Check tender status.
-		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		tender, err := u.tendRepo.FindByID(ctx, req.TenderID)
 		if err != nil {
 			return err
 		}
@@ -93,6 +93,7 @@ func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.Bi
 	if err != nil {
 		return dtos.BidResponse{}, err
 	}
+
 	return dtos.NewBidResponse(result), nil
 }
 
@@ -108,24 +109,24 @@ func (u Usecase) FindByUsername(ctx context.Context, username string, pagination
 	return dtos.NewBidResponseList(bidsList), nil
 }
 
-func (u Usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequest) ([]dtos.BidResponse, error) {
+func (u Usecase) FindByTenderID(ctx context.Context, req dtos.FindByTenderIDRequest) ([]dtos.BidResponse, error) {
 	var filteredBidsList []dtos.BidResponse
 
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
-		bidsList, err := u.repo.FindByTenderId(ctx, models.FindByTenderId{
-			TenderId:   req.TenderId,
+		bidsList, err := u.repo.FindByTenderID(ctx, models.FindByTenderID{
+			TenderID:   req.TenderID,
 			Pagination: req.Pagination,
 		})
 		if err != nil {
 			return err
 		}
 
-		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		tender, err := u.tendRepo.FindByID(ctx, req.TenderID)
 		if err != nil {
 			return err
 		}
 
-		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationID, req.Username)
 		if err != nil {
 			return err
 		}
@@ -155,8 +156,8 @@ func (u Usecase) FindByTenderId(ctx context.Context, req dtos.FindByTenderIdRequ
 	return filteredBidsList, nil
 }
 
-func (u Usecase) GetStatusById(ctx context.Context, bidId string, username string) (entity.BidStatus, error) {
-	bid, err := u.repo.FindByID(ctx, bidId)
+func (u Usecase) GetStatusByID(ctx context.Context, bidID string, username string) (entity.BidStatus, error) {
+	bid, err := u.repo.FindByID(ctx, bidID)
 	if err != nil {
 		return "", err
 	}
@@ -172,8 +173,8 @@ func (u Usecase) GetStatusById(ctx context.Context, bidId string, username strin
 	return bid.Status, nil
 }
 
-func (u Usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error) {
-	bid, err := u.repo.FindByID(ctx, req.BidId)
+func (u Usecase) UpdateStatusByID(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error) {
+	bid, err := u.repo.FindByID(ctx, req.BidID)
 	if err != nil {
 		return dtos.BidResponse{}, err
 	}
@@ -200,17 +201,17 @@ func (u Usecase) UpdateStatusById(ctx context.Context, req dtos.UpdateStatusRequ
 func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error) {
 	var resultBid dtos.BidResponse
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
-		bid, err := u.repo.FindByID(ctx, req.BidId)
+		bid, err := u.repo.FindByID(ctx, req.BidID)
 		if err != nil {
 			return err
 		}
 
-		tender, err := u.tendRepo.FindById(ctx, bid.TenderId)
+		tender, err := u.tendRepo.FindByID(ctx, bid.TenderID)
 		if err != nil {
 			return err
 		}
 
-		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationID, req.Username)
 		if err != nil {
 			return err
 		}
@@ -230,23 +231,25 @@ func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequ
 			resultBid = dtos.NewBidResponse(updatedBid)
 
 			return nil
-		} else if req.Decision == entity.DecisionApproved {
+		}
+
+		if req.Decision == entity.DecisionApproved {
 			user, err := u.empRepo.FindByUsername(ctx, req.Username)
 			if err != nil {
 				return err
 			}
 
-			err = u.repo.SubmitApproveDecision(ctx, bid.Id, user.Id)
+			err = u.repo.SubmitApproveDecision(ctx, bid.ID, user.ID)
 			if err != nil {
 				return err
 			}
 
-			approveBidCount, err := u.repo.GetBidApproveAmount(ctx, bid.Id)
+			approveBidCount, err := u.repo.GetBidApproveAmount(ctx, bid.ID)
 			if err != nil {
 				return err
 			}
 
-			responsibleList, err := u.orgRepo.GetOrganizationResponsible(ctx, tender.OrganizationId)
+			responsibleList, err := u.orgRepo.GetOrganizationResponsible(ctx, tender.OrganizationID)
 			if err != nil {
 				return err
 			}
@@ -284,19 +287,19 @@ func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequ
 func (u Usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error) {
 	var resultBid entity.Bid
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
-		bid, err := u.repo.FindByID(ctx, req.BidId)
+		bid, err := u.repo.FindByID(ctx, req.BidID)
 		if err != nil {
 			return err
 		}
 		resultBid = bid
 
-		tender, err := u.tendRepo.FindById(ctx, bid.TenderId)
+		tender, err := u.tendRepo.FindByID(ctx, bid.TenderID)
 		if err != nil {
 			slog.Error("couldn't find tender by bid id")
 			return err
 		}
 
-		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationID, req.Username)
 		if err != nil {
 			return err
 		}
@@ -305,7 +308,7 @@ func (u Usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest)
 		}
 
 		err = u.repo.SendFeedback(ctx, models.SendFeedback{
-			BidId:    req.BidId,
+			BidID:    req.BidID,
 			Feedback: req.Feedback,
 		})
 		if err != nil {
@@ -322,7 +325,7 @@ func (u Usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest)
 }
 
 func (u Usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error) {
-	oldBid, err := u.repo.FindByIDFromHistory(ctx, req.BidId, req.Version)
+	oldBid, err := u.repo.FindByIDFromHistory(ctx, req.BidID, req.Version)
 	if err != nil {
 		return dtos.BidResponse{}, err
 	}
@@ -343,7 +346,7 @@ func (u Usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.B
 	return dtos.NewBidResponse(updatedBid), nil
 }
 
-func (u Usecase) FindReviewsByTenderId(ctx context.Context, req dtos.FindReviewsRequest) ([]dtos.ReviewResponse, error) {
+func (u Usecase) FindReviewsByTenderID(ctx context.Context, req dtos.FindReviewsRequest) ([]dtos.ReviewResponse, error) {
 	var resultReviews []entity.Review
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
 		emp, err := u.empRepo.FindByUsername(ctx, req.RequesterUsername)
@@ -356,33 +359,33 @@ func (u Usecase) FindReviewsByTenderId(ctx context.Context, req dtos.FindReviews
 			return err
 		}
 
-		org, err := u.orgRepo.GetUserOrganization(ctx, emp.Id)
+		org, err := u.orgRepo.GetUserOrganization(ctx, emp.ID)
 		if err != nil {
 			return err
 		}
 
-		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		tender, err := u.tendRepo.FindByID(ctx, req.TenderID)
 		if err != nil {
 			return err
 		}
-		if tender.OrganizationId != org.Id {
+		if tender.OrganizationID != org.ID {
 			return apperror.Forbidden(apperror.ErrForbidden)
 		}
 
-		bidsList, err := u.repo.FindBidsByOrganization(ctx, org.Id)
+		bidsList, err := u.repo.FindBidsByOrganization(ctx, org.ID)
 		if err != nil {
 			return err
 		}
 
 		filteredBidsList := make([]entity.Bid, 0)
 		for _, bid := range bidsList {
-			if bid.AuthorId == author.Id {
+			if bid.AuthorID == author.ID {
 				filteredBidsList = append(filteredBidsList, bid)
 			}
 		}
 
 		reviews, err := u.repo.FindReviews(ctx, models.FindReview{
-			Bids:       bidsList,
+			Bids:       filteredBidsList,
 			Pagination: req.Pagination,
 		})
 		if err != nil {
@@ -390,6 +393,7 @@ func (u Usecase) FindReviewsByTenderId(ctx context.Context, req dtos.FindReviews
 		}
 
 		resultReviews = reviews
+
 		return nil
 	})
 	if err != nil {
@@ -402,12 +406,12 @@ func (u Usecase) FindReviewsByTenderId(ctx context.Context, req dtos.FindReviews
 func (u Usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, username string) (bool, error) {
 	switch bid.AuthorType {
 	case entity.AuthorOrganization:
-		org, err := u.orgRepo.GetUserOrganization(ctx, bid.AuthorId)
+		org, err := u.orgRepo.GetUserOrganization(ctx, bid.AuthorID)
 		if err != nil {
 			return false, err
 		}
 
-		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, org.Id, username)
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, org.ID, username)
 		if err != nil {
 			return false, err
 		}
@@ -420,7 +424,7 @@ func (u Usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 			return false, err
 		}
 
-		if emp.Id != bid.AuthorId {
+		if emp.ID != bid.AuthorID {
 			return false, apperror.Forbidden(apperror.ErrForbidden)
 		}
 	default:
@@ -432,7 +436,7 @@ func (u Usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, usern
 }
 
 func (u Usecase) Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error) {
-	bid, err := u.repo.FindByID(ctx, req.BidId)
+	bid, err := u.repo.FindByID(ctx, req.BidID)
 	if err != nil {
 		return dtos.BidResponse{}, err
 	}

@@ -7,14 +7,14 @@ import (
 )
 
 type SubmitDecisionRequest struct {
-	BidId    string             `json:"bidId"`
+	BidID    string             `json:"bidId"`
 	Decision entity.BidDecision `json:"decision"`
 	Username string             `json:"username"`
 }
 
 func (r SubmitDecisionRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.BidId, validation.Required),
+		validation.Field(&r.BidID, validation.Required),
 		validation.Field(&r.Decision, validation.Required, r.Decision.ValidationRule()),
 		validation.Field(&r.Username, validation.Required))
 }

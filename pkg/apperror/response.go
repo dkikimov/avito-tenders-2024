@@ -23,6 +23,7 @@ func SendError(w http.ResponseWriter, err error) {
 		}
 
 		slog.Info("sending error response", "error", err)
+
 		return
 	}
 

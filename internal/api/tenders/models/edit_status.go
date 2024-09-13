@@ -3,7 +3,7 @@ package models
 import "avito-tenders/internal/entity"
 
 type EditTenderStatus struct {
-	TenderId string
+	TenderID string
 	Status   entity.TenderStatus
 	Username string
 }

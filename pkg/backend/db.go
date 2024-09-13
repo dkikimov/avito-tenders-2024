@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"time"
 
-	"avito-tenders/pkg/postgres"
-
 	"github.com/jmoiron/sqlx"
+
+	"avito-tenders/pkg/postgres"
 )
 
 // dbConnectionOpts represents options for a new DB connection.

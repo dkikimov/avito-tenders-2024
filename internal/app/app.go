@@ -6,8 +6,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-
 	"avito-tenders/config"
 	"avito-tenders/internal/api"
 	"avito-tenders/pkg/backend"
@@ -26,7 +24,7 @@ func Run(cfg *config.Config) {
 
 	routes, err := api.InitAPIRoutes(back)
 	if err != nil {
-		log.Fatalf("Failed to initialize API routes: %v", err)
+		log.Panicf("Failed to initialize API routes: %v", err)
 	}
 
 	server := httpserver.New(routes, httpserver.Address(cfg.ServerAddress))

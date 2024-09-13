@@ -34,6 +34,7 @@ func (r *RFC3339Time) UnmarshalJSON(b []byte) error {
 	}
 
 	*r = RFCFromTime(tt)
+
 	return nil
 }
 

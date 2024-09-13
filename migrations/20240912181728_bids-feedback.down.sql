@@ -1,0 +1,1 @@
+drop table bids_reviews;

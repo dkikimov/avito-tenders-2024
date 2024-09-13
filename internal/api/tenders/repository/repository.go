@@ -43,6 +43,7 @@ func (r Repository) FindByIDFromHistory(ctx context.Context, id string, version 
 		}
 
 		slog.Error("failed to scan old tender", "error", err)
+
 		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
@@ -58,7 +59,7 @@ func (r Repository) Create(ctx context.Context, tender entity.Tender) (entity.Te
 		tender.Description,
 		tender.ServiceType,
 		tender.Status.String(),
-		tender.OrganizationId,
+		tender.OrganizationID,
 		tender.CreatorUsername)
 	if row.Err() != nil {
 		if errors.Is(row.Err(), sql.ErrNoRows) {
@@ -66,6 +67,7 @@ func (r Repository) Create(ctx context.Context, tender entity.Tender) (entity.Te
 		}
 
 		slog.Error("failed to insert tender", "error", row.Err())
+
 		return entity.Tender{}, apperror.InternalServerError(row.Err())
 	}
 
@@ -92,8 +94,8 @@ func (r Repository) Update(ctx context.Context, tender entity.Tender) (entity.Te
 		tender.Description,
 		tender.ServiceType,
 		tender.Status.String(),
-		tender.OrganizationId,
-		tender.Id)
+		tender.OrganizationID,
+		tender.ID)
 	if row.Err() != nil {
 		var pgError *pgconn.PgError
 		if errors.As(row.Err(), &pgError) {
@@ -103,6 +105,7 @@ func (r Repository) Update(ctx context.Context, tender entity.Tender) (entity.Te
 		}
 
 		slog.Error("failed to update tender", "error", row.Err())
+
 		return entity.Tender{}, apperror.InternalServerError(row.Err())
 	}
 
@@ -115,7 +118,7 @@ func (r Repository) Update(ctx context.Context, tender entity.Tender) (entity.Te
 }
 
 func (r Repository) FindByCreatorUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error) {
-	var tenderList = make([]entity.Tender, 0)
+	tenderList := make([]entity.Tender, 0)
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
@@ -133,7 +136,7 @@ func (r Repository) FindByCreatorUsername(ctx context.Context, username string, 
 	return tenderList, nil
 }
 
-func (r Repository) FindById(ctx context.Context, id string) (entity.Tender, error) {
+func (r Repository) FindByID(ctx context.Context, id string) (entity.Tender, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
 		where id = $1`,
@@ -151,6 +154,7 @@ func (r Repository) FindById(ctx context.Context, id string) (entity.Tender, err
 		}
 
 		slog.Error("failed to scan", "error", err)
+
 		return entity.Tender{}, apperror.InternalServerError(apperror.ErrInternal)
 	}
 
@@ -158,7 +162,7 @@ func (r Repository) FindById(ctx context.Context, id string) (entity.Tender, err
 }
 
 func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pagination queryparams.Pagination) ([]entity.Tender, error) {
-	var filterValues = make([]interface{}, 0)
+	filterValues := make([]interface{}, 0)
 
 	query := strings.Builder{}
 	query.WriteString(`select id, name, description, service_type, status, organization_id, version, created_at from tenders 
@@ -180,7 +184,7 @@ func (r Repository) GetAll(ctx context.Context, filter tenders.TenderFilter, pag
 	query.WriteString(fmt.Sprintf("order by name limit $%d offset $%d", len(filterValues)+1, len(filterValues)+2))
 	filterValues = append(filterValues, pagination.Limit, pagination.Offset)
 
-	var tenderList = make([]entity.Tender, 0)
+	tenderList := make([]entity.Tender, 0)
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &tenderList, query.String(), filterValues...)
 	if err != nil {
 		slog.Error("failed to get all tenders", "error", err)

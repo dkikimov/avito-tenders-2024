@@ -37,13 +37,14 @@ func (r Repository) FindByUsername(ctx context.Context, username string) (entity
 		}
 
 		slog.Error("couldn't scan employee found by username", "error", err)
+
 		return entity.Employee{}, apperror.BadRequest(apperror.ErrInternal)
 	}
 
 	return emp, nil
 }
 
-func (r Repository) FindById(ctx context.Context, id string) (entity.Employee, error) {
+func (r Repository) FindByID(ctx context.Context, id string) (entity.Employee, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 	select id, username, first_name, last_name, created_at, updated_at from employee
 	where id = $1`, id)
@@ -58,6 +59,7 @@ func (r Repository) FindById(ctx context.Context, id string) (entity.Employee, e
 		}
 
 		slog.Error("couldn't scan employee found by id", "error", err)
+
 		return entity.Employee{}, apperror.BadRequest(apperror.ErrInternal)
 	}
 

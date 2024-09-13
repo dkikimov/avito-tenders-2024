@@ -1,4 +1,4 @@
-package integration_tests
+package tests
 
 import (
 	"context"
@@ -11,14 +11,15 @@ import (
 
 	"github.com/go-testfixtures/testfixtures/v3"
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/suite"
 
 	"avito-tenders/config"
 	"avito-tenders/internal/api"
 	"avito-tenders/pkg/backend"
+
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 const (
@@ -59,7 +60,7 @@ func (s *TestSuite) SetupSuite() {
 
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("Migrate: up error: %s", err)
+		log.Panicf("Migrate: up error: %s", err)
 	}
 
 	if errors.Is(err, migrate.ErrNoChange) {
@@ -84,7 +85,7 @@ func (s *TestSuite) SetupSuite() {
 		PostgresDatabase: psqlContainer.Config.Database,
 	})
 	if err != nil {
-		log.Fatalf("Failed to initialize backend: %v", err)
+		log.Panicf("Failed to initialize backend: %v", err)
 	}
 
 	s.back = back
@@ -119,7 +120,7 @@ func (s *TestSuite) TearDownSuite() {
 	s.Require().NoError(s.back.DB.Close())
 }
 
-// create fixtures before each test
+// create fixtures before each test.
 func (s *TestSuite) SetupTest() {
 	fixtures, err := testfixtures.New(
 		testfixtures.Database(s.back.DB.DB),

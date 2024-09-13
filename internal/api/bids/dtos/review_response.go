@@ -6,14 +6,14 @@ import (
 )
 
 type ReviewResponse struct {
-	Id          string            `json:"id"`
+	ID          string            `json:"id"`
 	Description string            `json:"description"`
 	CreatedAt   types.RFC3339Time `json:"createdAt"`
 }
 
 func NewReviewResponse(review entity.Review) ReviewResponse {
 	return ReviewResponse{
-		Id:          review.Id,
+		ID:          review.ID,
 		Description: review.Description,
 		CreatedAt:   types.RFCFromTime(review.CreatedAt),
 	}

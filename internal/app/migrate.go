@@ -7,9 +7,10 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	"avito-tenders/pkg/backend"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 const (
@@ -35,7 +36,7 @@ func Migrate(backend backend.Backend) {
 			break
 		}
 
-		log.Printf("Migrate: could not connect to database: %s, attemps lefr: %d", err, attempts)
+		log.Printf("Migrate: could not connect to database: %s, attempts lefr: %d", err, attempts)
 		time.Sleep(defaultTimeout)
 		attempts--
 	}

@@ -3,9 +3,9 @@ package backend
 import (
 	"fmt"
 
-	"avito-tenders/config"
-
 	"github.com/jmoiron/sqlx"
+
+	"avito-tenders/config"
 )
 
 // Backend contains application connections to different external services and additional parameters that should be

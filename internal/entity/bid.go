@@ -53,13 +53,13 @@ const (
 )
 
 type Bid struct {
-	Id          string     `json:"id" db:"id"`
+	ID          string     `json:"id" db:"id"`
 	Name        string     `json:"name" db:"name"`
 	Description string     `json:"description" db:"description"`
 	Status      BidStatus  `json:"status" db:"status"`
-	TenderId    string     `json:"tenderId" db:"tender_id"`
+	TenderID    string     `json:"tenderId" db:"tender_id"`
 	AuthorType  AuthorType `json:"authorType" db:"author_type"`
-	AuthorId    string     `json:"authorId" db:"author_id"`
+	AuthorID    string     `json:"authorId" db:"author_id"`
 	Version     int        `json:"version" db:"version"`
 	CreatedAt   time.Time  `json:"createdAt" db:"created_at"`
 }

@@ -41,7 +41,7 @@ func (u *Usecase) Create(ctx context.Context, request dtos.CreateTenderRequest) 
 			return err
 		}
 
-		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, request.OrganizationId, request.CreatorUsername)
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, request.OrganizationID, request.CreatorUsername)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ func (u *Usecase) Create(ctx context.Context, request dtos.CreateTenderRequest) 
 func (u *Usecase) Edit(ctx context.Context, id string, request dtos.EditTenderRequest) (dtos.TenderResponse, error) {
 	var tender entity.Tender
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
-		oldTender, err := u.repo.FindById(ctx, id)
+		oldTender, err := u.repo.FindByID(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -108,7 +108,7 @@ func (u *Usecase) GetTenderStatus(ctx context.Context, id string, request dtos.T
 	var tender entity.Tender
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
 		var err error
-		tender, err = u.repo.FindById(ctx, id)
+		tender, err = u.repo.FindByID(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func (u *Usecase) GetTenderStatus(ctx context.Context, id string, request dtos.T
 		}
 
 		// Otherwise check if user is responsible.
-		responsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, request.Username)
+		responsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationID, request.Username)
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func (u *Usecase) FindByUsername(ctx context.Context, username string, paginatio
 func (u *Usecase) EditStatus(ctx context.Context, id string, request dtos.EditTenderStatusRequest) (dtos.TenderResponse, error) {
 	var tender entity.Tender
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
-		oldTender, err := u.repo.FindById(ctx, id)
+		oldTender, err := u.repo.FindByID(ctx, id)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (u *Usecase) Rollback(ctx context.Context, id string, request dtos.Rollback
 			return err
 		}
 
-		responsible, err := u.orgRepo.IsOrganizationResponsible(ctx, oldTender.OrganizationId, request.Username)
+		responsible, err := u.orgRepo.IsOrganizationResponsible(ctx, oldTender.OrganizationID, request.Username)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,6 @@
 package models
 
 type SendFeedback struct {
-	BidId    string
+	BidID    string
 	Feedback string
 }

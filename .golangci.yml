@@ -4,20 +4,17 @@ linters-settings:
   nlreturn:
     block-size: 3
 
-  cyclop:
-    max-complexity: 12
-
   godot:
     scope: declarations
 
   gci:
-    custom-order: true
     sections:
       - standard
       - default
       - prefix(avito-tenders)
       - blank
       - dot
+    custom-order: true
 
 linters:
   fast: false
@@ -25,7 +22,6 @@ linters:
   enable:
     - asciicheck
     - bodyclose
-    - cyclop
     - dogsled
     - durationcheck
     - errcheck
@@ -41,7 +37,6 @@ linters:
     - gofmt
     - gofumpt
     - goheader
-    - goimports
     - gomoddirectives
     - gomodguard
     - goprintffuncname
@@ -52,10 +47,8 @@ linters:
     - makezero
     - misspell
     - nakedret
-    - nestif
     - nilerr
     - nlreturn
-    - noctx
     - nolintlint
     - prealloc
     - predeclared

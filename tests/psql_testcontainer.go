@@ -1,4 +1,4 @@
-package integration_tests
+package tests
 
 import (
 	"context"
@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
-	_ "github.com/jackc/pgx/v4/stdlib"
-	_ "github.com/lib/pq"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	// For postgres support.
+	_ "github.com/jackc/pgx/v4/stdlib"
+	// For postgres support.
+	_ "github.com/lib/pq"
 )
 
 // PostgreSQLContainer wraps testcontainers.Container with extra methods.

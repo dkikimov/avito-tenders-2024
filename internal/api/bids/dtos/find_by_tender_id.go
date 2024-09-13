@@ -6,14 +6,14 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
-type FindByTenderIdRequest struct {
-	TenderId string `json:"tender_id"`
+type FindByTenderIDRequest struct {
+	TenderID string `json:"tender_id"`
 	Username string `json:"username"`
 	queryparams.Pagination
 }
 
-func (r FindByTenderIdRequest) Validate() error {
+func (r FindByTenderIDRequest) Validate() error {
 	return validation.ValidateStruct(&r,
-		validation.Field(&r.TenderId, validation.Required),
+		validation.Field(&r.TenderID, validation.Required),
 		validation.Field(&r.Username, validation.Required))
 }

@@ -7,8 +7,7 @@ import (
 	"avito-tenders/pkg/queryparams"
 )
 
-type ListOpts struct {
-}
+type ListOpts struct{}
 
 type Usecase interface {
 	Create(ctx context.Context, request dtos.CreateTenderRequest) (dtos.TenderResponse, error)

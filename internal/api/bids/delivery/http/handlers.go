@@ -73,8 +73,8 @@ func (h *Handlers) GetMyBids(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) FindBidsByTender(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("tender id is not specified")))
 		return
 	}
@@ -82,8 +82,8 @@ func (h *Handlers) FindBidsByTender(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 	pagination := fwcontext.GetPagination(r.Context())
 
-	req := dtos.FindByTenderIdRequest{
-		TenderId:   tenderId,
+	req := dtos.FindByTenderIDRequest{
+		TenderID:   tenderID,
 		Username:   username,
 		Pagination: pagination,
 	}
@@ -92,7 +92,7 @@ func (h *Handlers) FindBidsByTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bidsList, err := h.uc.FindByTenderId(r.Context(), req)
+	bidsList, err := h.uc.FindByTenderID(r.Context(), req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -108,13 +108,13 @@ func (h *Handlers) FindBidsByTender(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetBidStatus(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
-	status, err := h.uc.GetStatusById(r.Context(), bidId, username)
+	status, err := h.uc.GetStatusByID(r.Context(), bidID, username)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -131,9 +131,9 @@ func (h *Handlers) GetBidStatus(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) UpdateBidStatus(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h *Handlers) UpdateBidStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dtos.UpdateStatusRequest{
-		BidId:    bidId,
+		BidID:    bidID,
 		Status:   entity.BidStatus(statusString),
 		Username: username,
 	}
@@ -154,7 +154,7 @@ func (h *Handlers) UpdateBidStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedBid, err := h.uc.UpdateStatusById(r.Context(), req)
+	updatedBid, err := h.uc.UpdateStatusByID(r.Context(), req)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
@@ -170,9 +170,9 @@ func (h *Handlers) UpdateBidStatus(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) EditBid(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
@@ -189,7 +189,7 @@ func (h *Handlers) EditBid(w http.ResponseWriter, r *http.Request) {
 	}
 
 	req := dtos.EditBidRequest{
-		BidId:       bidId,
+		BidID:       bidID,
 		Username:    username,
 		EditBidBody: bidBody,
 	}
@@ -215,16 +215,16 @@ func (h *Handlers) EditBid(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) SubmitDecision(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
 	decision := r.URL.Query().Get("decision")
 
 	req := dtos.SubmitDecisionRequest{
-		BidId:    bidId,
+		BidID:    bidID,
 		Decision: entity.BidDecision(decision),
 		Username: username,
 	}
@@ -248,9 +248,9 @@ func (h *Handlers) SubmitDecision(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) Rollback(w http.ResponseWriter, r *http.Request) {
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
@@ -269,7 +269,7 @@ func (h *Handlers) Rollback(w http.ResponseWriter, r *http.Request) {
 	username := fwcontext.GetUsername(r.Context())
 
 	request := dtos.RollbackRequest{
-		BidId:    bidId,
+		BidID:    bidID,
 		Version:  versionInt,
 		Username: username,
 	}
@@ -292,9 +292,9 @@ func (h *Handlers) Rollback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) SendFeedback(w http.ResponseWriter, r *http.Request) {
-	bidId := chi.URLParam(r, bidIdPathParam)
-	if bidId == "" {
-		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+	bidID := chi.URLParam(r, bidIDPathParam)
+	if bidID == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidID is not specified")))
 		return
 	}
 
@@ -302,7 +302,7 @@ func (h *Handlers) SendFeedback(w http.ResponseWriter, r *http.Request) {
 	feedback := r.URL.Query().Get("bidFeedback")
 
 	request := dtos.SendFeedbackRequest{
-		BidId:    bidId,
+		BidID:    bidID,
 		Feedback: feedback,
 		Username: username,
 	}
@@ -325,8 +325,8 @@ func (h *Handlers) SendFeedback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) FindReviewsByTender(w http.ResponseWriter, r *http.Request) {
-	tenderId := chi.URLParam(r, tenderIdPathParam)
-	if tenderId == "" {
+	tenderID := chi.URLParam(r, tenderIDPathParam)
+	if tenderID == "" {
 		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
 		return
 	}
@@ -337,7 +337,7 @@ func (h *Handlers) FindReviewsByTender(w http.ResponseWriter, r *http.Request) {
 	pagination := fwcontext.GetPagination(r.Context())
 
 	request := dtos.FindReviewsRequest{
-		TenderId:          tenderId,
+		TenderID:          tenderID,
 		AuthorUsername:    authorUsername,
 		RequesterUsername: requesterUsername,
 		Pagination:        pagination,
@@ -347,7 +347,7 @@ func (h *Handlers) FindReviewsByTender(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tender, err := h.uc.FindReviewsByTenderId(r.Context(), request)
+	tender, err := h.uc.FindReviewsByTenderID(r.Context(), request)
 	if err != nil {
 		apperror.SendError(w, err)
 		return
