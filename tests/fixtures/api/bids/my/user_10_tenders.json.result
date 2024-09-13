@@ -4,6 +4,7 @@
     "name": "Bid 1",
     "description": "Bid 1 description",
     "status": "Created",
+    "tenderId": "550e8400-e29b-41d4-a716-446655440043",
     "authorType": "User",
     "authorId": "550e8400-e29b-41d4-a716-44665544000a",
     "version": 1,
