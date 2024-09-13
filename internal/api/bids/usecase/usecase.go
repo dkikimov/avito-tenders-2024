@@ -272,6 +272,13 @@ func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequ
 				if err != nil {
 					return err
 				}
+			} else {
+				bid, err = u.repo.FindByID(ctx, req.BidID)
+				if err != nil {
+					return err
+				}
+
+				resultBid = dtos.NewBidResponse(bid)
 			}
 		}
 

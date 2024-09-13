@@ -10,6 +10,7 @@ type BidResponse struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	Status      entity.BidStatus  `json:"status"`
+	TenderID    string            `json:"tenderId"`
 	AuthorType  entity.AuthorType `json:"authorType"`
 	AuthorID    string            `json:"authorId"`
 	Version     int               `json:"version"`
@@ -22,6 +23,7 @@ func NewBidResponse(bid entity.Bid) BidResponse {
 		Name:        bid.Name,
 		Description: bid.Description,
 		Status:      bid.Status,
+		TenderID:    bid.TenderID,
 		AuthorType:  bid.AuthorType,
 		AuthorID:    bid.AuthorID,
 		Version:     bid.Version,
