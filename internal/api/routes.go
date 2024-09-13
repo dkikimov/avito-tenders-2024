@@ -2,6 +2,7 @@ package api
 
 import (
 	"log/slog"
+	"net/http"
 
 	trmsqlx "github.com/avito-tech/go-transaction-manager/drivers/sqlx/v2"
 	trmcontext "github.com/avito-tech/go-transaction-manager/trm/v2/context"
@@ -67,6 +68,15 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 	r.Route(groupAPI, func(r chi.Router) {
 		tenderHandlers.MapTendersRoutes(r, mwManager)
 		bidsHandlers.MapBidsRoutes(r, mwManager)
+		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+			err := b.DB.PingContext(r.Context())
+			if err != nil {
+				w.WriteHeader(http.StatusServiceUnavailable)
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+		})
 	})
 
 	slog.Info("API routes initialized")
