@@ -47,21 +47,37 @@ func NewUsecase(createOpts Opts) *Usecase {
 func (u Usecase) Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.BidResponse, error) {
 	var result entity.Bid
 	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		// Check does user exist.
+		_, err := u.empRepo.FindById(ctx, req.AuthorId)
+		if err != nil {
+			return err
+		}
+
 		// Check does author exist.
 		switch req.AuthorType {
 		case entity.AuthorOrganization:
 			_, err := u.orgRepo.GetUserOrganization(ctx, req.AuthorId)
 			if err != nil {
+				if errors.Is(err, apperror.ErrNotFound) {
+					return apperror.Forbidden(apperror.ErrForbidden)
+				}
+
 				return err
 			}
 
 		case entity.AuthorUser:
-			_, err := u.empRepo.FindById(ctx, req.AuthorId)
-			if err != nil {
-				return err
-			}
+			break
 		default:
 			return apperror.BadRequest(errors.New("author type is invalid"))
+		}
+
+		// Check tender status.
+		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		if err != nil {
+			return err
+		}
+		if tender.Status != entity.TenderPublished {
+			return apperror.Forbidden(apperror.ErrForbidden)
 		}
 
 		// Create bid.

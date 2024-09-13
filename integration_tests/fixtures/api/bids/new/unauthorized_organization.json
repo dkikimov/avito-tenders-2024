@@ -1,0 +1,7 @@
+{
+  "name": "Bid unauthorized organization",
+  "description": "Bid unauthorized organization description",
+  "tenderId": "550e8400-e29b-41d4-a716-446655440041",
+  "authorType": "Organization",
+  "authorId": "550e8400-e29b-41d4-a716-44665544001e"
+}

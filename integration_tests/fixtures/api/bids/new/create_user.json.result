@@ -1,0 +1,9 @@
+{
+  "id": "{{.id}}",
+  "name": "Bid 1",
+  "status": "Created",
+  "authorType": "User",
+  "authorId": "550e8400-e29b-41d4-a716-44665544000c",
+  "version": 1,
+  "createdAt": "{{.createdAt}}"
+}
