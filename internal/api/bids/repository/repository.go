@@ -227,7 +227,8 @@ func (r Repository) FindReviews(ctx context.Context, req models.FindReview) ([]e
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &reviewsList, `
 		select id, description, bid_id, created_at from bids_reviews
 		where bid_id = any($1)
-`, pq.Array(ids))
+		limit $2 offset $3
+`, pq.Array(ids), req.Limit, req.Offset)
 	if err != nil {
 		slog.Error("couldn't find bid reviews by review id", "error", err)
 		return nil, apperror.InternalServerError(apperror.ErrInternal)
