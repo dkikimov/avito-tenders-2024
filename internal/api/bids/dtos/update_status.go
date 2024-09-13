@@ -15,6 +15,6 @@ type UpdateStatusRequest struct {
 func (r UpdateStatusRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.BidID, validation.Required, validation.Length(1, 100)),
-		validation.Field(&r.Status, validation.Required, r.Status.ValidationRule()),
+		validation.Field(&r.Status, validation.Required, validation.In(entity.BidCreated, entity.BidPublished, entity.BidCanceled)),
 		validation.Field(&r.Username, validation.Required))
 }
