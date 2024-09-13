@@ -1,10 +1,11 @@
 package models
 
-import "avito-tenders/pkg/queryparams"
+import (
+	"avito-tenders/internal/entity"
+	"avito-tenders/pkg/queryparams"
+)
 
 type FindReview struct {
-	TenderId          string `json:"tenderId"`
-	AuthorUsername    string `json:"authorUsername"`
-	RequesterUsername string `json:"requesterUsername"`
+	Bids []entity.Bid
 	queryparams.Pagination
 }

@@ -290,3 +290,72 @@ func (h *Handlers) Rollback(w http.ResponseWriter, r *http.Request) {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }
+
+func (h *Handlers) SendFeedback(w http.ResponseWriter, r *http.Request) {
+	bidId := chi.URLParam(r, bidIdPathParam)
+	if bidId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+		return
+	}
+
+	username := fwcontext.GetUsername(r.Context())
+	feedback := r.URL.Query().Get("bidFeedback")
+
+	request := dtos.SendFeedbackRequest{
+		BidId:    bidId,
+		Feedback: feedback,
+		Username: username,
+	}
+	if err := request.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.SendFeedback(r.Context(), request)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}
+
+func (h *Handlers) FindReviewsByTender(w http.ResponseWriter, r *http.Request) {
+	tenderId := chi.URLParam(r, tenderIdPathParam)
+	if tenderId == "" {
+		apperror.SendError(w, apperror.BadRequest(errors.New("bidId is not specified")))
+		return
+	}
+
+	authorUsername := r.URL.Query().Get("authorUsername")
+	requesterUsername := r.URL.Query().Get("requesterUsername")
+
+	pagination := fwcontext.GetPagination(r.Context())
+
+	request := dtos.FindReviewsRequest{
+		TenderId:          tenderId,
+		AuthorUsername:    authorUsername,
+		RequesterUsername: requesterUsername,
+		Pagination:        pagination,
+	}
+	if err := request.Validate(); err != nil {
+		apperror.SendError(w, apperror.BadRequest(err))
+		return
+	}
+
+	tender, err := h.uc.FindReviewsByTenderId(r.Context(), request)
+	if err != nil {
+		apperror.SendError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(tender); err != nil {
+		apperror.SendError(w, apperror.InternalServerError(err))
+	}
+}

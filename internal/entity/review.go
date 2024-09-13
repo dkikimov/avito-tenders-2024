@@ -1,7 +1,10 @@
 package entity
 
+import "time"
+
 type Review struct {
-	Id          string `json:"id"`
-	Description string `json:"description"`
-	CreatedAt   string `json:"created_at"`
+	Id          string    `db:"id"`
+	Description string    `db:"description"`
+	BidId       string    `db:"bid_id"`
+	CreatedAt   time.Time `db:"created_at"`
 }

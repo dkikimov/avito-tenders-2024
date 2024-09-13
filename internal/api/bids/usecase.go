@@ -18,5 +18,5 @@ type Usecase interface {
 	SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error)
 	SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error)
 	Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error)
-	FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error)
+	FindReviewsByTenderId(ctx context.Context, req dtos.FindReviewsRequest) ([]dtos.ReviewResponse, error)
 }

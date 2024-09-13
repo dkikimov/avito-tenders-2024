@@ -282,8 +282,43 @@ func (u Usecase) SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequ
 }
 
 func (u Usecase) SendFeedback(ctx context.Context, req dtos.SendFeedbackRequest) (dtos.BidResponse, error) {
-	// TODO implement me
-	panic("implement me")
+	var resultBid entity.Bid
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		bid, err := u.repo.FindByID(ctx, req.BidId)
+		if err != nil {
+			return err
+		}
+		resultBid = bid
+
+		tender, err := u.tendRepo.FindById(ctx, bid.TenderId)
+		if err != nil {
+			slog.Error("couldn't find tender by bid id")
+			return err
+		}
+
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, req.Username)
+		if err != nil {
+			return err
+		}
+		if !isResponsible {
+			return apperror.Forbidden(apperror.ErrForbidden)
+		}
+
+		err = u.repo.SendFeedback(ctx, models.SendFeedback{
+			BidId:    req.BidId,
+			Feedback: req.Feedback,
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return dtos.BidResponse{}, err
+	}
+
+	return dtos.NewBidResponse(resultBid), nil
 }
 
 func (u Usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.BidResponse, error) {
@@ -308,9 +343,60 @@ func (u Usecase) Rollback(ctx context.Context, req dtos.RollbackRequest) (dtos.B
 	return dtos.NewBidResponse(updatedBid), nil
 }
 
-func (u Usecase) FindReviewsByTenderId(ctx, req dtos.FindReviewsRequest) ([]entity.Review, error) {
-	// TODO implement me
-	panic("implement me")
+func (u Usecase) FindReviewsByTenderId(ctx context.Context, req dtos.FindReviewsRequest) ([]dtos.ReviewResponse, error) {
+	var resultReviews []entity.Review
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		emp, err := u.empRepo.FindByUsername(ctx, req.RequesterUsername)
+		if err != nil {
+			return err
+		}
+
+		author, err := u.empRepo.FindByUsername(ctx, req.RequesterUsername)
+		if err != nil {
+			return err
+		}
+
+		org, err := u.orgRepo.GetUserOrganization(ctx, emp.Id)
+		if err != nil {
+			return err
+		}
+
+		tender, err := u.tendRepo.FindById(ctx, req.TenderId)
+		if err != nil {
+			return err
+		}
+		if tender.OrganizationId != org.Id {
+			return apperror.Forbidden(apperror.ErrForbidden)
+		}
+
+		bidsList, err := u.repo.FindBidsByOrganization(ctx, org.Id)
+		if err != nil {
+			return err
+		}
+
+		filteredBidsList := make([]entity.Bid, 0)
+		for _, bid := range bidsList {
+			if bid.AuthorId == author.Id {
+				filteredBidsList = append(filteredBidsList, bid)
+			}
+		}
+
+		reviews, err := u.repo.FindReviews(ctx, models.FindReview{
+			Bids:       bidsList,
+			Pagination: req.Pagination,
+		})
+		if err != nil {
+			return err
+		}
+
+		resultReviews = reviews
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return dtos.NewReviewResponseList(resultReviews), nil
 }
 
 func (u Usecase) AuthorHasPermissions(ctx context.Context, bid entity.Bid, username string) (bool, error) {

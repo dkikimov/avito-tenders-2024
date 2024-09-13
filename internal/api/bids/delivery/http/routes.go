@@ -25,5 +25,8 @@ func (h *Handlers) MapBidsRoutes(r chi.Router, mw *middlewares.Manager) {
 		r.Put(fmt.Sprintf("/{%s}/rollback/{%s}", bidIdPathParam, versionPathParam), middlewares.Conveyor(h.Rollback, mw.UserExistsMiddleware))
 
 		r.Put(fmt.Sprintf("/{%s}/submit_decision", bidIdPathParam), middlewares.Conveyor(h.SubmitDecision, mw.UserExistsMiddleware))
+
+		r.Put(fmt.Sprintf("/{%s}/feedback", bidIdPathParam), middlewares.Conveyor(h.SendFeedback, mw.UserExistsMiddleware))
+		r.Get(fmt.Sprintf("/{%s}/reviews", tenderIdPathParam), middlewares.Conveyor(h.FindReviewsByTender, mw.PaginationMiddleware))
 	})
 }

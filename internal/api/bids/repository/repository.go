@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	trmsqlx "github.com/avito-tech/go-transaction-manager/drivers/sqlx/v2"
 
@@ -211,12 +212,48 @@ select bid_id as id, name, description, status, tender_id, author_type, author_i
 	return foundBid, nil
 }
 
-func (r Repository) SendFeedback(ctx context.Context, req models.SendFeedback) (entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+func (r Repository) SendFeedback(ctx context.Context, req models.SendFeedback) error {
+	_, err := r.getter.DefaultTrOrDB(ctx, r.db).ExecContext(ctx, `
+		insert into bids_reviews(description, bid_id) VALUES ($1, $2)
+`, req.Feedback, req.BidId)
+	if err != nil {
+		return apperror.BadRequest(apperror.ErrInvalidInput)
+	}
+
+	return nil
 }
 
-func (r Repository) FindReviews(ctx context.Context, req models.FindReview) ([]entity.Bid, error) {
-	// TODO implement me
-	panic("implement me")
+func (r Repository) FindReviews(ctx context.Context, req models.FindReview) ([]entity.Review, error) {
+	var reviewsList []entity.Review
+
+	ids := make([]string, 0, len(req.Bids))
+	for _, bid := range req.Bids {
+		ids = append(ids, bid.Id)
+	}
+
+	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &reviewsList, `
+		select id, description, bid_id, created_at from bids_reviews
+		where bid_id = any($1)
+`, pq.Array(ids))
+	if err != nil {
+		slog.Error("couldn't find bid reviews by review id", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return reviewsList, nil
+}
+
+func (r Repository) FindBidsByOrganization(ctx context.Context, organizationId string) ([]entity.Bid, error) {
+	var bidsList []entity.Bid
+
+	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &bidsList, `
+			select b.id, b.name, b.description, b.status, b.tender_id, b.author_type, b.author_id, b.version, b.created_at from bids b
+			join tenders t on t.organization_id = $1
+			where tender_id = t.id`, organizationId)
+	if err != nil {
+		slog.Error("couldn't find bid list by organization id", "error", err)
+		return nil, apperror.InternalServerError(apperror.ErrInternal)
+	}
+
+	return bidsList, nil
 }
