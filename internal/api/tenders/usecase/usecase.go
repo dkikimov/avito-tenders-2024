@@ -118,6 +118,12 @@ func (u *Usecase) GetTenderStatus(ctx context.Context, id string, request dtos.T
 			return nil
 		}
 
+		// Check if user exists.
+		_, err = u.empRepo.FindByUsername(ctx, request.Username)
+		if err != nil {
+			return err
+		}
+
 		// Otherwise check if user is responsible.
 		responsible, err := u.orgRepo.IsOrganizationResponsible(ctx, tender.OrganizationId, request.Username)
 		if err != nil {

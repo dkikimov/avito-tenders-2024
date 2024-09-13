@@ -128,7 +128,8 @@ func (h *Handlers) GetTenderStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(dtos.TenderStatusResponse{Status: tender.Status}); err != nil {
+
+	if _, err = w.Write([]byte(tender.Status)); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }

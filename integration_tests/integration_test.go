@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -358,6 +359,133 @@ func (s *TestSuite) TestGetMyTenders() {
 			s.Require().NoError(err)
 
 			s.Assert().Equal(tt.want.Len, len(response))
+		})
+	}
+}
+
+func (s *TestSuite) TestGetTenderStatusByID() {
+	type want struct {
+		StatusCode int
+	}
+	type args struct {
+		username       string
+		tenderId       string
+		outputFileName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		{
+			name: "Get published tender from creator account",
+			args: args{
+				username:       "user4",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+				outputFileName: "tenders/status/tender2.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get published tender from not creator account",
+			args: args{
+				username:       "user1",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440041",
+				outputFileName: "tenders/status/tender2.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get created tender from creator account",
+			args: args{
+				username:       "user4",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440040",
+				outputFileName: "tenders/status/tender1.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get created tender from not creator account",
+			args: args{
+				username: "user1",
+				tenderId: "550e8400-e29b-41d4-a716-446655440040",
+			},
+			want: want{
+				StatusCode: 403,
+			},
+		},
+		{
+			name: "Get closed tender from creator account",
+			args: args{
+				username:       "user4",
+				outputFileName: "tenders/status/tender3.json.result",
+				tenderId:       "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get closed tender from not creator account",
+			args: args{
+				username: "user1",
+				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 403,
+			},
+		},
+		{
+			name: "Get closed tender with invalid user account",
+			args: args{
+				username: "user40",
+				tenderId: "550e8400-e29b-41d4-a716-446655440042",
+			},
+			want: want{
+				StatusCode: 401,
+			},
+		},
+		{
+			name: "Get unknown tender",
+			args: args{
+				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+			},
+			want: want{
+				StatusCode: 404,
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			baseUrl := fmt.Sprintf("%s/api/tenders/%s/status", s.server.URL, tt.args.tenderId)
+
+			v := url.Values{}
+			if len(tt.args.username) != 0 {
+				v.Add("username", tt.args.username)
+			}
+
+			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
+			s.Require().NoError(err)
+
+			defer res.Body.Close()
+
+			s.Require().Equal(tt.want.StatusCode, res.StatusCode)
+			if tt.want.StatusCode != 200 {
+				return
+			}
+
+			expected := s.loader.LoadString(fmt.Sprintf("%s/%s", fixturesPath, tt.args.outputFileName))
+
+			body, err := io.ReadAll(res.Body)
+			s.Require().NoError(err)
+
+			s.Assert().Equal(expected, string(body))
 		})
 	}
 }

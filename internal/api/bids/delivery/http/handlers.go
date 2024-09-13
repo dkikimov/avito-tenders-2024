@@ -122,7 +122,8 @@ func (h *Handlers) GetBidStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(dtos.BidStatusResponse{BidStatus: status}); err != nil {
+
+	if _, err = w.Write([]byte(status)); err != nil {
 		apperror.SendError(w, apperror.InternalServerError(err))
 	}
 }

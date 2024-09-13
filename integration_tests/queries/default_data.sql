@@ -95,3 +95,11 @@ VALUES ('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-4466554
         '550e8400-e29b-41d4-a716-44665544000b'),
        ('550e8400-e29b-41d4-a716-44665544003b', '550e8400-e29b-41d4-a716-446655440023',
         '550e8400-e29b-41d4-a716-44665544000c');
+
+insert into tenders(id, name, description, service_type, status, organization_id, creator_username, created_at, version)
+VALUES ('550e8400-e29b-41d4-a716-446655440040', 'Tender 1', 'Tender 1 description', 'Construction',
+        'Created', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1),
+       ('550e8400-e29b-41d4-a716-446655440041', 'Tender 2', 'Tender 2 description', 'Delivery',
+        'Published', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1),
+       ('550e8400-e29b-41d4-a716-446655440042', 'Tender 3', 'Tender 3 description', 'Manufacture',
+        'Closed', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1);
