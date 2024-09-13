@@ -114,16 +114,16 @@ func (r Repository) Update(ctx context.Context, tender entity.Tender) (entity.Te
 	return result, nil
 }
 
-func (r Repository) FindByOrganizationID(ctx context.Context, organizationID string, pagination queryparams.Pagination) ([]entity.Tender, error) {
+func (r Repository) FindByCreatorUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]entity.Tender, error) {
 	var tenderList = make([]entity.Tender, 0)
 
 	err := r.getter.DefaultTrOrDB(ctx, r.db).SelectContext(ctx, &tenderList, `
 		select id, name, description, service_type, status, organization_id, version, created_at from tenders 
-		where organization_id = $1
+		where creator_username = $1
 		order by name
 		limit $2
 		offset $3`,
-		organizationID,
+		username,
 		pagination.Limit,
 		pagination.Offset)
 	if err != nil {

@@ -169,7 +169,7 @@ func (s *TestSuite) TestGetMyTenders() {
 			},
 			want: want{
 				StatusCode: 200,
-				Len:        2,
+				Len:        0,
 			},
 		},
 		{
