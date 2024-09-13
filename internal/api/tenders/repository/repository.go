@@ -61,11 +61,8 @@ func (r Repository) Create(ctx context.Context, tender entity.Tender) (entity.Te
 		tender.OrganizationId,
 		tender.CreatorUsername)
 	if row.Err() != nil {
-		var pgError *pgconn.PgError
-		if errors.As(row.Err(), &pgError) {
-			if pgError.Code == "23503" {
-				return entity.Tender{}, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
-			}
+		if errors.Is(row.Err(), sql.ErrNoRows) {
+			return entity.Tender{}, apperror.Unauthorized(apperror.ErrUserDoesNotExist)
 		}
 
 		slog.Error("failed to insert tender", "error", row.Err())

@@ -6,6 +6,7 @@ import (
 
 	trm "github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 
+	"avito-tenders/internal/api/employee"
 	"avito-tenders/internal/api/organization"
 	"avito-tenders/internal/api/tenders"
 	"avito-tenders/internal/api/tenders/dtos"
@@ -17,6 +18,7 @@ import (
 type Usecase struct {
 	repo      tenders.Repository
 	orgRepo   organization.Repository
+	empRepo   employee.Repository
 	trManager *trm.Manager
 }
 
@@ -24,14 +26,36 @@ type Opts struct {
 	Repo      tenders.Repository
 	OrgRepo   organization.Repository
 	TrManager *trm.Manager
+	EmpRepo   employee.Repository
 }
 
 func NewUsecase(opts Opts) *Usecase {
-	return &Usecase{repo: opts.Repo, orgRepo: opts.OrgRepo, trManager: opts.TrManager}
+	return &Usecase{repo: opts.Repo, orgRepo: opts.OrgRepo, trManager: opts.TrManager, empRepo: opts.EmpRepo}
 }
 
 func (u *Usecase) Create(ctx context.Context, request dtos.CreateTenderRequest) (dtos.TenderResponse, error) {
-	tender, err := u.repo.Create(ctx, request.ToEntity())
+	var tender entity.Tender
+	err := u.trManager.Do(ctx, func(ctx context.Context) error {
+		_, err := u.empRepo.FindByUsername(ctx, request.CreatorUsername)
+		if err != nil {
+			return err
+		}
+
+		isResponsible, err := u.orgRepo.IsOrganizationResponsible(ctx, request.OrganizationId, request.CreatorUsername)
+		if err != nil {
+			return err
+		}
+		if !isResponsible {
+			return apperror.Forbidden(apperror.ErrForbidden)
+		}
+
+		tender, err = u.repo.Create(ctx, request.ToEntity())
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return dtos.TenderResponse{}, err
 	}
