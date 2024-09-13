@@ -27,6 +27,7 @@ const groupAPI = "/api"
 func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -48,6 +49,7 @@ func InitAPIRoutes(b backend.Backend) (chi.Router, error) {
 		Repo:      tendersRepository,
 		OrgRepo:   organizationRepository,
 		TrManager: trManager,
+		EmpRepo:   empRepository,
 	})
 	bidsUC := bidsUsecase.NewUsecase(bidsUsecase.Opts{
 		Repo:       bidsRepository,

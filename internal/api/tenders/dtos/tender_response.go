@@ -1,20 +1,19 @@
 package dtos
 
 import (
-	"time"
-
 	"avito-tenders/internal/entity"
+	"avito-tenders/pkg/types"
 )
 
 type TenderResponse struct {
-	Id             string              `db:"id"`
-	Name           string              `db:"name"`
-	Description    string              `db:"description"`
-	ServiceType    entity.ServiceType  `db:"service_type"`
-	Status         entity.TenderStatus `db:"status"`
-	OrganizationId string              `db:"organization_id"`
-	Version        int                 `db:"version"`
-	CreatedAt      time.Time           `db:"created_at"`
+	Id             string              `json:"id" db:"id"`
+	Name           string              `json:"name" db:"name"`
+	Description    string              `json:"description" db:"description"`
+	ServiceType    entity.ServiceType  `json:"serviceType" db:"service_type"`
+	Status         entity.TenderStatus `json:"status" db:"status"`
+	OrganizationId string              `json:"organizationId" db:"organization_id"`
+	Version        int                 `json:"version" db:"version"`
+	CreatedAt      types.RFC3339Time   `json:"createdAt" db:"created_at"`
 }
 
 func NewTenderResponse(tender entity.Tender) TenderResponse {
@@ -26,7 +25,7 @@ func NewTenderResponse(tender entity.Tender) TenderResponse {
 		Status:         tender.Status,
 		OrganizationId: tender.OrganizationId,
 		Version:        tender.Version,
-		CreatedAt:      tender.CreatedAt,
+		CreatedAt:      types.RFCFromTime(tender.CreatedAt),
 	}
 }
 

@@ -1,0 +1,7 @@
+{
+  "name": "Тендер 1",
+  "description": "Описание тендера",
+  "serviceType": "Construction",
+  "status": "Created",
+  "creatorUsername": "user1"
+}
