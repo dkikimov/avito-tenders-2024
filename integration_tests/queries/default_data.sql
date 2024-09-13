@@ -98,8 +98,30 @@ VALUES ('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-4466554
 
 insert into tenders(id, name, description, service_type, status, organization_id, creator_username, created_at, version)
 VALUES ('550e8400-e29b-41d4-a716-446655440040', 'Tender 1', 'Tender 1 description', 'Construction',
-        'Created', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1),
+        'Created', '550e8400-e29b-41d4-a716-446655440021', 'user4', '2024-09-09 18:07:09.488422', 1),
        ('550e8400-e29b-41d4-a716-446655440041', 'Tender 2', 'Tender 2 description', 'Delivery',
-        'Published', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1),
+        'Published', '550e8400-e29b-41d4-a716-446655440021', 'user4', '2024-09-09 18:07:09.488422', 1),
        ('550e8400-e29b-41d4-a716-446655440042', 'Tender 3', 'Tender 3 description', 'Manufacture',
-        'Closed', '550e8400-e29b-41d4-a716-446655440021','user4', '2024-09-09 18:07:09.488422', 1);
+        'Closed', '550e8400-e29b-41d4-a716-446655440021', 'user4', '2024-09-09 18:07:09.488422', 1),
+       ('550e8400-e29b-41d4-a716-446655440043', 'Tender 4', 'Tender 4 description', 'Manufacture',
+        'Published', '550e8400-e29b-41d4-a716-446655440021', 'user4', '2024-09-09 18:07:09.488422', 1);
+
+insert into bids(id, name, description, status, tender_id, author_type, author_id, version, created_at)
+VALUES ('550e8400-e29b-41d4-a716-446655440050', 'Bid 1', 'Bid 1 description', 'Created',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'User', '550e8400-e29b-41d4-a716-44665544000a', 1, '2024-09-09 18:07:09.488422'),
+       ('550e8400-e29b-41d4-a716-446655440051', 'Bid 2', 'Bid 2 description', 'Created',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'User', '550e8400-e29b-41d4-a716-446655440009', 1, '2024-09-09 18:07:09.488422'),
+       ('550e8400-e29b-41d4-a716-446655440052', 'Bid 3', 'Bid 3 description', 'Published',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'Organization', '550e8400-e29b-41d4-a716-446655440009', 1, '2024-09-09 18:07:09.488422'),
+       ('550e8400-e29b-41d4-a716-446655440053', 'Bid 4', 'Bid 4 description', 'Canceled',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'Organization', '550e8400-e29b-41d4-a716-446655440009', 1, '2024-09-09 18:07:09.488422'),
+       ('550e8400-e29b-41d4-a716-446655440054', 'Bid 5', 'Bid 5 description', 'Approved',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'Organization', '550e8400-e29b-41d4-a716-446655440009', 1, '2024-09-09 18:07:09.488422'),
+       ('550e8400-e29b-41d4-a716-446655440055', 'Bid 6', 'Bid 6 description', 'Rejected',
+        '550e8400-e29b-41d4-a716-446655440043',
+        'Organization', '550e8400-e29b-41d4-a716-446655440009', 1, '2024-09-09 18:07:09.488422');

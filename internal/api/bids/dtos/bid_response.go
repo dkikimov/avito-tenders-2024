@@ -6,24 +6,26 @@ import (
 )
 
 type BidResponse struct {
-	Id         string            `json:"id"`
-	Name       string            `json:"name"`
-	Status     entity.BidStatus  `json:"status"`
-	AuthorType entity.AuthorType `json:"authorType"`
-	AuthorId   string            `json:"authorId"`
-	Version    int               `json:"version"`
-	CreatedAt  types.RFC3339Time `json:"createdAt"`
+	Id          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Status      entity.BidStatus  `json:"status"`
+	AuthorType  entity.AuthorType `json:"authorType"`
+	AuthorId    string            `json:"authorId"`
+	Version     int               `json:"version"`
+	CreatedAt   types.RFC3339Time `json:"createdAt"`
 }
 
 func NewBidResponse(bid entity.Bid) BidResponse {
 	return BidResponse{
-		Id:         bid.Id,
-		Name:       bid.Name,
-		Status:     bid.Status,
-		AuthorType: bid.AuthorType,
-		AuthorId:   bid.AuthorId,
-		Version:    bid.Version,
-		CreatedAt:  types.RFCFromTime(bid.CreatedAt),
+		Id:          bid.Id,
+		Name:        bid.Name,
+		Description: bid.Description,
+		Status:      bid.Status,
+		AuthorType:  bid.AuthorType,
+		AuthorId:    bid.AuthorId,
+		Version:     bid.Version,
+		CreatedAt:   types.RFCFromTime(bid.CreatedAt),
 	}
 }
 

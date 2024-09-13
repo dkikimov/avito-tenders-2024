@@ -1,0 +1,12 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440051",
+    "name": "Bid 2",
+    "description": "Bid 2 description",
+    "status": "Created",
+    "authorType": "User",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  }
+]

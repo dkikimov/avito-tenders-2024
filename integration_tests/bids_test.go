@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"avito-tenders/internal/api/bids/dtos"
@@ -157,6 +159,134 @@ func (s *TestSuite) TestCreateBid() {
 			})
 
 			JSONEq(t, expected, response)
+		})
+	}
+}
+
+func (s *TestSuite) TestGetMyBids() {
+	type want struct {
+		StatusCode int
+		Len        int
+	}
+	type args struct {
+		username       string
+		limit          string
+		offset         string
+		outputFileName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want want
+	}{
+		// 550e8400-e29b-41d4-a716-44665544000a
+		{
+			name: "Get my bids user 9",
+			args: args{
+				username:       "user9",
+				outputFileName: "bids/my/user_9_tenders.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get my bids user 10",
+			args: args{
+				username:       "user10",
+				outputFileName: "bids/my/user_10_tenders.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get my bids from organization's employee account",
+			args: args{
+				username: "user8",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        0,
+			},
+		},
+		{
+			name: "Get my bids limit",
+			args: args{
+				username:       "user9",
+				limit:          "1",
+				outputFileName: "bids/my/user_9_tenders_limit_1.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get my tenders offset",
+			args: args{
+				username:       "user9",
+				offset:         "1",
+				outputFileName: "bids/my/user_9_tenders_offset_1.json.result",
+			},
+			want: want{
+				StatusCode: 200,
+			},
+		},
+		{
+			name: "Get my tenders for user that didn't create them",
+			args: args{
+				username: "user30",
+			},
+			want: want{
+				StatusCode: 200,
+				Len:        0,
+			},
+		},
+		{
+			name: "Unknown user",
+			args: args{
+				username: "user40",
+			},
+			want: want{
+				StatusCode: 401,
+			},
+		},
+	}
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			baseUrl := fmt.Sprintf("%s/api/bids/my", s.server.URL)
+			v := url.Values{}
+			v.Add("username", tt.args.username)
+			if len(tt.args.limit) != 0 {
+				v.Add("limit", tt.args.limit)
+			}
+			if len(tt.args.offset) != 0 {
+				v.Add("offset", tt.args.offset)
+			}
+
+			res, err := s.server.Client().Get(fmt.Sprintf("%s?%s", baseUrl, v.Encode()))
+			require.NoError(t, err)
+
+			defer res.Body.Close()
+
+			require.Equal(t, tt.want.StatusCode, res.StatusCode)
+			if tt.want.StatusCode != 200 {
+				return
+			}
+
+			// check response
+			var response []dtos.BidResponse
+			err = json.NewDecoder(res.Body).Decode(&response)
+			require.NoError(t, err)
+
+			if tt.args.outputFileName != "" {
+				expected := s.loader.LoadString(fmt.Sprintf("%s/%s", fixturesPath, tt.args.outputFileName))
+
+				JSONEq(t, expected, response)
+			} else {
+				assert.Equal(t, tt.want.Len, len(response))
+			}
+
 		})
 	}
 }

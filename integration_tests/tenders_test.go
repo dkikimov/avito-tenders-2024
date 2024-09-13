@@ -371,7 +371,7 @@ func (s *TestSuite) TestGetTenderStatusByID() {
 		{
 			name: "Get unknown tender",
 			args: args{
-				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+				tenderId: "550e8400-e29b-41d4-a716-446655440044",
 			},
 			want: want{
 				StatusCode: 404,
@@ -499,7 +499,7 @@ func (s *TestSuite) TestEditTenderStatusByID() {
 		{
 			name: "Get unknown tender",
 			args: args{
-				tenderId: "550e8400-e29b-41d4-a716-446655440043",
+				tenderId: "550e8400-e29b-41d4-a716-446655440044",
 			},
 			want: want{
 				StatusCode: 404,

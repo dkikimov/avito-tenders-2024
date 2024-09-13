@@ -1,0 +1,52 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440051",
+    "name": "Bid 2",
+    "description": "Bid 2 description",
+    "status": "Created",
+    "authorType": "User",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440052",
+    "name": "Bid 3",
+    "description": "Bid 3 description",
+    "status": "Published",
+    "authorType": "Organization",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440053",
+    "name": "Bid 4",
+    "description": "Bid 4 description",
+    "status": "Canceled",
+    "authorType": "Organization",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440054",
+    "name": "Bid 5",
+    "description": "Bid 5 description",
+    "status": "Approved",
+    "authorType": "Organization",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440055",
+    "name": "Bid 6",
+    "description": "Bid 6 description",
+    "status": "Rejected",
+    "authorType": "Organization",
+    "authorId": "550e8400-e29b-41d4-a716-446655440009",
+    "version": 1,
+    "createdAt": "2024-09-09T18:07:09Z"
+  }
+]
