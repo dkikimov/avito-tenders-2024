@@ -5,11 +5,12 @@ import (
 	"log"
 	"time"
 
+	"avito-tenders/pkg/backend"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 
-	"avito-tenders/pkg/backend"
-
+	// File driver for migration tool.
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 

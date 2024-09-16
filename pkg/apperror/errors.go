@@ -3,7 +3,6 @@ package apperror
 import (
 	"errors"
 	"net/http"
-	"strings"
 )
 
 var (
@@ -25,10 +24,6 @@ type AppError struct {
 
 func (h AppError) Unwrap() error {
 	return h.Err
-}
-
-func Equals(err error, expectedErr error) bool {
-	return strings.EqualFold(err.Error(), expectedErr.Error())
 }
 
 func (h AppError) Error() string {
@@ -71,22 +66,6 @@ func NotFound(err error) error {
 	return &AppError{
 		Code:    http.StatusNotFound,
 		Message: "not_found",
-		Err:     err,
-	}
-}
-
-func Conflict(err error) error {
-	return &AppError{
-		Code:    http.StatusConflict,
-		Message: "Conflict",
-		Err:     err,
-	}
-}
-
-func GatewayTimeout(err error) error {
-	return &AppError{
-		Code:    http.StatusGatewayTimeout,
-		Message: "gateway_timeout",
 		Err:     err,
 	}
 }

@@ -12,7 +12,7 @@ type Usecase interface {
 	Create(ctx context.Context, req dtos.CreateBidRequest) (dtos.BidResponse, error)
 	FindByUsername(ctx context.Context, username string, pagination queryparams.Pagination) ([]dtos.BidResponse, error)
 	FindByTenderID(ctx context.Context, req dtos.FindByTenderIDRequest) ([]dtos.BidResponse, error)
-	GetStatusByID(ctx context.Context, bidID string, username string) (entity.BidStatus, error)
+	GetStatusByID(ctx context.Context, bidID, username string) (entity.BidStatus, error)
 	UpdateStatusByID(ctx context.Context, req dtos.UpdateStatusRequest) (dtos.BidResponse, error)
 	Edit(ctx context.Context, req dtos.EditBidRequest) (dtos.BidResponse, error)
 	SubmitDecision(ctx context.Context, req dtos.SubmitDecisionRequest) (dtos.BidResponse, error)

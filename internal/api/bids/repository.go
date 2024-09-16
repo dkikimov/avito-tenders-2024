@@ -16,7 +16,7 @@ type Repository interface {
 	FindByIDFromHistory(ctx context.Context, id string, version int) (entity.Bid, error)
 	SendFeedback(ctx context.Context, req models.SendFeedback) error
 	FindReviews(ctx context.Context, req models.FindReview) ([]entity.Review, error)
-	SubmitApproveDecision(ctx context.Context, bidID string, userID string) error
+	SubmitApproveDecision(ctx context.Context, bidID, userID string) error
 	GetBidApproveAmount(ctx context.Context, bidID string) (int, error)
 	FindBidsByOrganization(ctx context.Context, organizationID string) ([]entity.Bid, error)
 }

@@ -39,7 +39,7 @@ func NewRepository(db *sqlx.DB, c *trmsqlx.CtxGetter) *Repository {
 	return &Repository{db: db, getter: c}
 }
 
-func (r Repository) SubmitApproveDecision(ctx context.Context, bidID string, userID string) error {
+func (r Repository) SubmitApproveDecision(ctx context.Context, bidID, userID string) error {
 	_, err := r.getter.DefaultTrOrDB(ctx, r.db).ExecContext(ctx,
 		`insert into bids_approvals (bid_id, user_id)
 				values ($1, $2) 

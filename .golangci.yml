@@ -7,14 +7,12 @@ linters-settings:
   godot:
     scope: declarations
 
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(avito-tenders)
-      - blank
-      - dot
-    custom-order: true
+  gofumpt:
+    module-path: avito-tenders
+    extra-rules: true
+
+  goimports:
+    local-prefixes: avito-tenders
 
 linters:
   fast: false
@@ -30,12 +28,12 @@ linters:
     - exhaustive
     - exportloopref
     - forcetypeassert
-    - gci
     - goconst
     - gocritic
     - godot
     - gofmt
     - gofumpt
+    - goimports
     - goheader
     - gomoddirectives
     - gomodguard

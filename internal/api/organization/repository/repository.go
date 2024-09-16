@@ -57,7 +57,7 @@ func (r Repository) GetUserOrganization(ctx context.Context, userID string) (ent
 	return org, nil
 }
 
-func (r Repository) IsOrganizationResponsible(ctx context.Context, organizationID string, username string) (bool, error) {
+func (r Repository) IsOrganizationResponsible(ctx context.Context, organizationID, username string) (bool, error) {
 	row := r.getter.DefaultTrOrDB(ctx, r.db).QueryRowxContext(ctx, `
 		select o.id from organization_responsible o
 		          join employee e on e.username = $1

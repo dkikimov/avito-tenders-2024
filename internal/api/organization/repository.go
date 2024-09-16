@@ -8,7 +8,7 @@ import (
 
 type Repository interface {
 	// IsOrganizationResponsible checks if user is responsible in given organization.
-	IsOrganizationResponsible(ctx context.Context, organizationID string, username string) (bool, error)
+	IsOrganizationResponsible(ctx context.Context, organizationID, username string) (bool, error)
 
 	// GetUserOrganization returns user's organization.
 	GetUserOrganization(ctx context.Context, userID string) (entity.Organization, error)

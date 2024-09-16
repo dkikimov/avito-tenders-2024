@@ -156,7 +156,7 @@ func (u Usecase) FindByTenderID(ctx context.Context, req dtos.FindByTenderIDRequ
 	return filteredBidsList, nil
 }
 
-func (u Usecase) GetStatusByID(ctx context.Context, bidID string, username string) (entity.BidStatus, error) {
+func (u Usecase) GetStatusByID(ctx context.Context, bidID, username string) (entity.BidStatus, error) {
 	bid, err := u.repo.FindByID(ctx, bidID)
 	if err != nil {
 		return "", err
